@@ -61,5 +61,3 @@ func (p *Pin) DetectEdgeRisingAsync() error {
 func (p *Pin) DetectEdgFallingAsync() error {
 	return nil
 }
-
-
