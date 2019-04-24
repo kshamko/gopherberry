@@ -62,7 +62,4 @@ func (p *Pin) DetectEdgFallingAsync() error {
 	return nil
 }
 
-//PullUpDown (GPPUD)
-func (p *Pin) PullUpDown() error {
-	return nil
-}
+
