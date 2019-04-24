@@ -1,0 +1,10 @@
+RaspberryPi & Golang
+
+
+* Virtual And Physical Addresses
+
+	//Thus a peripheral advertised here at bus address 0x7Ennnnnn is available in the ARM kenel at virtual address 0xF2nnnnnn
+	return &Chip{
+		BaseAddrPhys: 0x3F000000,
+		BaseAddrVirt: 0xF2000000,
+	
