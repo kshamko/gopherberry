@@ -29,7 +29,7 @@ func main() {
 	fmt.Printf("0%b\n", MODE_ALT4)
 	fmt.Printf("0%b\n", MODE_ALT5)
 
-	baseCommand := uint8(0)
+	//baseCommand := uint8(0)
 
 	/*chip, err := gopherberry.NewChip()
 	fmt.Printf("%+v, %v", chip, err)*/
@@ -37,12 +37,13 @@ func main() {
 	pin := 17
 	//fselReg := uint8(pin) / 10
 	shift := (uint8(pin) % 10) * 3
-	f := uint32(0)
+	//f := uint32(0)
 
-	const pinMask = 7 // 111 - pinmode is 3 bits
+	//const pinMask = 7 // 111 - pinmode is 3 bits
 
 	fmt.Println("Shift: ", shift)
-	fmt.Printf("%b\n", (pinMask<<shift)|(f<<shift))
+	fmt.Printf("%b\n", MODE_OUTPUT<<shift)
 }
 
+//00 000 000 001 000 000 000 000 000 000 000
 //1110 0000 0000 0000 0000 0000
