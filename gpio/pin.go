@@ -7,7 +7,7 @@ func NewPin() (*Pin, error) {
 	return nil, nil
 }
 
-//Select GPFSELn (?????)
+//Select GPFSELn  defines an alternate function (chip specific
 func (p *Pin) Select() {
 
 }
