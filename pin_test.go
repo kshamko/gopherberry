@@ -1,4 +1,4 @@
-package gpio
+package gopherberry
 
 import (
 	"fmt"

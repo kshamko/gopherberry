@@ -43,6 +43,7 @@ func main() {
 
 	fmt.Println("Shift: ", shift)
 	fmt.Printf("%b\n", MODE_OUTPUT<<shift)
+	fmt.Println(0x7E20001C-0x7E200018, 0x7E200018-0x7E200014)
 }
 
 //00 000 000 001 000 000 000 000 000 000 000

@@ -1,65 +1,76 @@
 package gopherberry
 
 import (
-	//"fmt"
-	"github.com/kshamko/gopherberry/gpio"
+	"errors"
+	//"github.com/kshamko/gopherberry/gpio"
 	//"os"
+)
+
+const (
+	//NoBCMNnm means that pin has no bcm number (ground, voltage pins)
+	NoBCMNnm = -1
+)
+
+var (
+	//ErrNoPin error prodices when there is no bcm number for pin
+	ErrNoPin = errors.New("no pin exists")
 )
 
 //Chip struct
 type Chip struct {
 	//MemMap
-	MemMap *ChipMmap
+	memMap *Mmap
 	//PerBaseAddrPhys - periphial base physical address
-	PerBaseAddrPhys int64
+	PerBaseAddrPhys uint64
 	//PerBaseAddrBirt - periphial base virtual address
-	PerBaseAddrVirt int64
+	PerBaseAddrVirt uint64
 	//Board2BCM maps board pin number to "Broadcom SOC channel" number
 	//https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
-	Board2BCM map[int]int
+	Board2BCM     map[int]int
+	GPIORegisters map[string][]uint64
 }
 
-//NewChip func
-func NewChip() (*Chip, error) {
+//NewChip2837 func
+func NewChip2837() (*Chip, error) {
 
 	mMap, err := NewMmap()
 
 	//Thus a peripheral advertised here at bus address 0x7Ennnnnn is available in the ARM kenel at virtual address 0xF2nnnnnn
 	chip := &Chip{
-		MemMap:          mMap,
+		memMap:          mMap,
 		PerBaseAddrPhys: 0x3F000000,
 		PerBaseAddrVirt: 0xF2000000,
 		Board2BCM: map[int]int{
-			1:  -1, //3v3 power
-			2:  -1, //5v power
-			3:  2,  //SDA
-			4:  -1, //5v power
-			5:  3,  //SCL
-			6:  0,  //ground
-			7:  4,  //GPCLK0
-			8:  14, //TXD
-			9:  -1, //ground
-			10: 15, //RXD
+			1:  NoBCMNnm, //3v3 power
+			2:  NoBCMNnm, //5v power
+			3:  2,        //SDA
+			4:  NoBCMNnm, //5v power
+			5:  3,        //SCL
+			6:  0,        //ground
+			7:  4,        //GPCLK0
+			8:  14,       //TXD
+			9:  NoBCMNnm, //ground
+			10: 15,       //RXD
 			11: 17,
 			12: 18, //PWM0
 			13: 27,
-			14: -1, //ground
+			14: NoBCMNnm, //ground
 			15: 22,
 			16: 23,
-			17: -1, //3v3 power
+			17: NoBCMNnm, //3v3 power
 			18: 24,
-			19: 10, //MOSI
-			20: -1, //ground
-			21: 9,  //MISO
+			19: 10,       //MOSI
+			20: NoBCMNnm, //ground
+			21: 9,        //MISO
 			22: 25,
-			23: 11, //SCLK
-			24: 8,  //CE0
-			25: -1, //ground
-			26: 7,  //CE1
-			27: 0,  //ID_SD
-			28: 1,  //ID_SC
+			23: 11,       //SCLK
+			24: 8,        //CE0
+			25: NoBCMNnm, //ground
+			26: 7,        //CE1
+			27: 0,        //ID_SD
+			28: 1,        //ID_SC
 			29: 5,
-			30: -1, //ground
+			30: NoBCMNnm, //ground
 			31: 6,
 			32: 12, //PWM0
 			33: 13, //PWM1
@@ -67,17 +78,25 @@ func NewChip() (*Chip, error) {
 			35: 19, //MISO
 			36: 16,
 			37: 26,
-			38: 20, //MOSI
-			39: -1, //ground
-			40: 21, //SCLK
+			38: 20,       //MOSI
+			39: NoBCMNnm, //ground
+			40: 21,       //SCLK
 		},
+		GPIORegisters: map[string][]uint64{},
 	}
 
 	return chip, err
 }
 
 //GetPin retuns pin object
-func (c *Chip) GetPin(pinNum int) (*gpio.Pin, error) {
+func (c *Chip) GetPin(pinNumBoard int) (*Pin, error) {
 
-	return nil, nil
+	if num, ok := c.Board2BCM[pinNumBoard]; ok && num != NoBCMNnm {
+		return &Pin{
+			BCMNum: num,
+			mMap:   c.memMap,
+		}, nil
+	}
+
+	return nil, ErrNoPin
 }

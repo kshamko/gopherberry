@@ -2,7 +2,6 @@ package gpio
 
 //Clock struct
 type Clock struct {
-	Pin
 }
 
 //PullUpDown (GPPUD)

@@ -1,16 +1,18 @@
 package gopherberry
 
 import (
+	//"bytes"
 	"fmt"
+	//"launchpad.net/gommap"
 	"os"
 )
 
-//ChipMmap struct
-type ChipMmap struct {
+//Mmap struct
+type Mmap struct {
 }
 
 //NewMmap func
-func NewMmap() (*ChipMmap, error) {
+func NewMmap() (*Mmap, error) {
 	//var file *os.File
 
 	// Open fd for rw mem access; try dev/mem first (need root)
