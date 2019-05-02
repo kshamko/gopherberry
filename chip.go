@@ -26,7 +26,8 @@ type Chip struct {
 	PerBaseAddrVirt uint64
 	//Board2BCM maps board pin number to "Broadcom SOC channel" number
 	//https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
-	Board2BCM     map[int]int
+	Board2BCM map[int]int
+
 	GPIORegisters map[string][]uint64
 }
 

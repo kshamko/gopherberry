@@ -43,12 +43,11 @@ func (p *Pin) mode(mode pinMode) error {
 
 	//calculate proper register offset
 	registerOffset := p.BCMNum / 10 //1 register for 10 pins
-
 	//calculate command. all commands are assumed to be 32-bit
 	shift := (uint8(p.BCMNum) % 10) * 3 // 10 pins per register, command of 3 bits
 	command := mode << shift
-
 	p.curMode = mode
+
 	return nil
 }
 
