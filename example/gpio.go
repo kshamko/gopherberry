@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	//"github.com/kshamko/gopherberry"
-)
+import "github.com/kshamko/gopherberry"
 
 //See GPFSELn spec for details
 const (
@@ -20,7 +17,12 @@ const (
 
 func main() {
 
-	fmt.Printf("00%b\n", MODE_INPUT)
+	r := gopherberry.New()
+
+	r.GetPin(1)
+	r.GetPin(11)
+	r.GetPin(100)
+	/*fmt.Printf("00%b\n", MODE_INPUT)
 	fmt.Printf("00%b\n", MODE_OUTPUT)
 	fmt.Printf("%b\n", MODE_ALT0)
 	fmt.Printf("%b\n", MODE_ALT1)
@@ -34,16 +36,16 @@ func main() {
 	/*chip, err := gopherberry.NewChip()
 	fmt.Printf("%+v, %v", chip, err)*/
 
-	pin := 17
+	//pin := 17
 	//fselReg := uint8(pin) / 10
-	shift := (uint8(pin) % 10) * 3
+	//shift := (uint8(pin) % 10) * 3
 	//f := uint32(0)
 
 	//const pinMask = 7 // 111 - pinmode is 3 bits
 
-	fmt.Println("Shift: ", shift)
-	fmt.Printf("%b\n", MODE_OUTPUT<<shift)
-	fmt.Println(0x7E20001C-0x7E200018, 0x7E20001C-0x7E200018)
+	//fmt.Println("Shift: ", shift)
+	//fmt.Printf("%b\n", MODE_OUTPUT<<shift)
+	//fmt.Println(0x7E20001C-0x7E200018, 0x7E20001C-0x7E200018)
 }
 
 //00 000 000 001 000 000 000 000 000 000 000

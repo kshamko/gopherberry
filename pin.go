@@ -1,24 +1,12 @@
 package gopherberry
 
-type pinMode int
-
-//See GPFSELn spec for details
-const (
-	pinModeInput  pinMode = 0 //000
-	pinModeOutput pinMode = 1 //001
-
-	pinModeALT0 pinMode = 4 //100
-	pinModeALT1 pinMode = 5 //101
-	pinModeALT2 pinMode = 6 //110
-	pinModeALT3 pinMode = 7 //111
-	pinModeALT4 pinMode = 3 //011
-	pinModeALT5 pinMode = 2 //010
-)
+import "fmt"
 
 //Pin struct
 type Pin struct {
-	BCMNum  int
-	mMap    *Mmap
+	bcmNum int
+	chip   chip
+	//mMap    *mmap
 	curMode pinMode
 }
 
@@ -32,21 +20,19 @@ func (p *Pin) ModeOutput() error {
 	return p.mode(pinModeOutput)
 }
 
-//See GPFSEL(0..5) spec in ARM datasheet for details. GPSEL uses 6 registers
-//GPSET0 for pins 0-9
-//GPSET1 for pins 10-19
-//GPSET2 for pins 20-29
-//GPSET3 for pins 30-39
-//GPSET4 for pins 40-49
-//GPSET5 for pins 50-53
 func (p *Pin) mode(mode pinMode) error {
 
-	//calculate proper register offset
-	registerOffset := p.BCMNum / 10 //1 register for 10 pins
-	//calculate command. all commands are assumed to be 32-bit
-	shift := (uint8(p.BCMNum) % 10) * 3 // 10 pins per register, command of 3 bits
-	command := mode << shift
-	p.curMode = mode
+	addressOffset, operation := p.chip.gpgsel(p.bcmNum, mode)
+	fmt.Println(addressOffset, operation)
+
+	/*
+		//calculate proper register offset
+		registerOffset := p.BCMNum / 10 //1 register for 10 pins
+		//calculate command. all commands are assumed to be 32-bit
+		shift := (uint8(p.BCMNum) % 10) * 3 // 10 pins per register, command of 3 bits
+		command := mode << shift
+		p.curMode = mode
+	*/
 
 	return nil
 }

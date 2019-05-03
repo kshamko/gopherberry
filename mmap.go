@@ -8,11 +8,11 @@ import (
 )
 
 //Mmap struct
-type Mmap struct {
+type mmap struct {
 }
 
 //NewMmap func
-func NewMmap() (*Mmap, error) {
+func NewMmap() (*mmap, error) {
 	//var file *os.File
 
 	// Open fd for rw mem access; try dev/mem first (need root)
