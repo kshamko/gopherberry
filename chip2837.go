@@ -4,10 +4,12 @@ package gopherberry
 type Chip2837 struct {
 	//MemMap
 	//memMap *Mmap
-	//PerBaseAddrPhys - periphial base physical address
-	//PerBaseAddrPhys uint64
+	//PeriphialsBaseAddrPhys - periphial base physical address
+	periphialsBaseAddrPhys uint64
 	//PerBaseAddrBirt - periphial base virtual address
-	perBaseAddrVirt uint64
+	periphialsBaseAddrVirt uint64
+	//
+	periphialsBaseAddrBus uint64
 	//Board2BCM maps board pin number to "Broadcom SOC channel" number
 	//https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
 	board2BCM map[int]int
@@ -22,10 +24,9 @@ func newChip2837() chip {
 	//space starting at address 0xF2000000. Thus a peripheral advertised here at bus address
 	//0x7Ennnnnn is available in the ARM kenel at virtual address 0xF2nnnnnn.
 	chip := &Chip2837{
-		//memMap:          mMap,
-		//PerBaseAddrPhys: 0x3F000000,
-		perBaseAddrVirt: 0xF2000000,
-		//addressIncrement:
+		periphialsBaseAddrPhys: 0x3F000000,
+		periphialsBaseAddrVirt: 0xF2000000,
+		periphialsBaseAddrBus:  0x7E000000,
 		board2BCM: map[int]int{
 			1:  NoBCMNnm, //3v3 power
 			2:  NoBCMNnm, //5v power
@@ -88,12 +89,22 @@ func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
 func (chip *Chip2837) gpgsel(bcm int, mode pinMode) (addressOffset int, operation int) {
 
 	//calculate proper register offset
-	registerOffset := bcm / 10 //1 register for 10 pins
+	//registerOffset := bcm / 10 //1 register for 10 pins
 
 	//calculate operation. all operations are assumed to be 32-bit
 	shift := (uint8(bcm) % 10) * 3 // 10 pins per register, command of 3 bits
 	operation = int(mode) << shift
 
-	address := chip.gpioRegisters["GPFSEL"][registerOffset]
+	//address := chip.gpioRegisters["GPFSEL"][registerOffset]
 	return addressOffset, operation
+}
+
+func (chip *Chip2837) addressOffset(commandRegister uint64) uint64 {
+	addrOffset := commandRegister - chip.periphialsBaseAddrBus
+	virtualRegisterAddr := chip.periphialsBaseAddrVirt + addrOffset
+
+	physAddr := virtualRegisterAddr - chip.periphialsBaseAddrVirt // + chip.periphialsBaseAddrPhys
+
+	return physAddr
+
 }

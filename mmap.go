@@ -9,10 +9,11 @@ import (
 
 //Mmap struct
 type mmap struct {
+	memMap map[string][]byte
 }
 
 //NewMmap func
-func NewMmap() (*mmap, error) {
+func NewMmap(registers map[string][]uint64) (*mmap, error) {
 	//var file *os.File
 
 	// Open fd for rw mem access; try dev/mem first (need root)
