@@ -2,7 +2,9 @@ package gopherberry
 
 import (
 	//"bytes"
-	"fmt"
+
+	"syscall"
+
 	//"launchpad.net/gommap"
 	"os"
 )
@@ -13,8 +15,7 @@ type mmap struct {
 }
 
 //NewMmap func
-func NewMmap(registers map[string][]uint64) (*mmap, error) {
-	//var file *os.File
+func newMmap(registers map[string][]uint64, baseVirtAddress uint64) (*mmap, error) {
 
 	// Open fd for rw mem access; try dev/mem first (need root)
 	file, err := os.OpenFile("/dev/mem", os.O_RDWR|os.O_SYNC, 0)
@@ -22,40 +23,34 @@ func NewMmap(registers map[string][]uint64) (*mmap, error) {
 		file, err = os.OpenFile("/dev/gpiomem", os.O_RDWR|os.O_SYNC, 0)
 	}*/
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
+
 	// FD can be closed after memory mapping
 	defer file.Close()
 
-	/*memlock.Lock()
-	defer memlock.Unlock()
-	// Memory map GPIO registers to slice
-	gpioMem, gpioMem8, err = memMap(file.Fd(), gpioBase)
-	if err != nil {
-		return
+	memMap := map[string][]byte{}
+	for op, addresses := range registers {
+		data, err := mapMemory(file.Fd(), virtAddress(addresses[0], baseVirtAddress), len(addresses))
+		if err == nil {
+			memMap[op] = data
+		}
 	}
-	// Memory map clock registers to slice
-	clkMem, clkMem8, err = memMap(file.Fd(), clkBase)
-	if err != nil {
-		return
-	}
-	// Memory map pwm registers to slice
-	pwmMem, pwmMem8, err = memMap(file.Fd(), pwmBase)
-	if err != nil {
-		return
-	}
-	// Memory map spi registers to slice
-	spiMem, spiMem8, err = memMap(file.Fd(), spiBase)
-	if err != nil {
-		return
-	}
-	// Memory map interruption registers to slice
-	intrMem, intrMem8, err = memMap(file.Fd(), intrBase)
-	if err != nil {
-		return
-	}*/
-	//backupIRQs() // back up enabled IRQs, to restore it later
 
-	return nil, nil
+	return &mmap{memMap}, nil
+}
+
+func mapMemory(fd uintptr, base uint64, len int) ([]byte, error) {
+	return syscall.Mmap(
+		int(fd),
+		int64(base),
+		len,
+		syscall.PROT_READ|syscall.PROT_WRITE,
+		syscall.MAP_SHARED,
+	)
+}
+
+func virtAddress(busAddress uint64, baseVirtAddress uint64) uint64 {
+	base := busAddress & 0xff000000
+	return baseVirtAddress + (busAddress - base)
 }

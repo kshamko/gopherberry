@@ -27,36 +27,33 @@ var (
 	ErrNoPin = errors.New("no pin exists")
 )
 
-//Chip struct
-/*type Cho struct {
-	//MemMap
-	memMap *Mmap
-	//PerBaseAddrPhys - periphial base physical address
-	PerBaseAddrPhys uint64
-	//PerBaseAddrBirt - periphial base virtual address
-	PerBaseAddrVirt uint64
-	//Board2BCM maps board pin number to "Broadcom SOC channel" number
-	//https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
-	Board2BCM map[int]int
-	//GPIORegisters maps function to registers
-	GPIORegisters map[string][]uint64
-}*/
-
 //Raspberry struct
 type Raspberry struct {
 	chip chip
+	mmap *mmap
 }
 
 type chip interface {
 	getPinBCM(pinNumBoard int) int
+	getBaseVirtAddress() uint64
+	getRegisters() map[string][]uint64
+
 	gpgsel(bcm int, mode pinMode) (addressOffset int, operation int)
+	gpset(bcm int) (addressOffset int, operation int)
 }
 
 //New func
-func New() *Raspberry {
-	return &Raspberry{
-		chip: newChip2837(),
+func New() (*Raspberry, error) {
+	chip := newChip2837()
+	mmap, err := newMmap(chip.getRegisters(), chip.getBaseVirtAddress())
+	if err != nil {
+		return nil, err
 	}
+
+	return &Raspberry{
+		chip: chip,
+		mmap: mmap,
+	}, nil
 }
 
 //GetPin retuns pin object
@@ -71,7 +68,7 @@ func (r *Raspberry) GetPin(pinNumBoard int) (*Pin, error) {
 	return &Pin{
 		bcmNum: bcmNum,
 		chip:   r.chip,
-		//mMap:   c.memMap,
+		mmap:   r.mmap,
 	}, nil
 
 }

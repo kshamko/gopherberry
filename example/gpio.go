@@ -17,7 +17,7 @@ const (
 
 func main() {
 
-	r := gopherberry.New()
+	r, _ := gopherberry.New()
 
 	r.GetPin(1)
 	r.GetPin(11)

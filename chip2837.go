@@ -3,13 +3,15 @@ package gopherberry
 //Chip2837 implementation for raspberry 3+
 type Chip2837 struct {
 	//MemMap
-	//memMap *Mmap
+	//memMap *mmap
 	//PeriphialsBaseAddrPhys - periphial base physical address
 	periphialsBaseAddrPhys uint64
 	//PerBaseAddrBirt - periphial base virtual address
 	periphialsBaseAddrVirt uint64
 	//
 	periphialsBaseAddrBus uint64
+	//
+	memOffset, gpioOffset uint64
 	//Board2BCM maps board pin number to "Broadcom SOC channel" number
 	//https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
 	board2BCM map[int]int
@@ -24,16 +26,18 @@ func newChip2837() chip {
 	//space starting at address 0xF2000000. Thus a peripheral advertised here at bus address
 	//0x7Ennnnnn is available in the ARM kenel at virtual address 0xF2nnnnnn.
 	chip := &Chip2837{
-		periphialsBaseAddrPhys: 0x3F000000,
-		periphialsBaseAddrVirt: 0xF2000000,
+		//periphialsBaseAddrPhys: 0x3F000000, // I/O devices are assigned physical memory addresses, which the Linux kernel prevents user programs from accessing.
+		periphialsBaseAddrVirt: 0xF2000000, // We need to map this physical memory into the program's virtual addressing scheme so that the program can access it.
 		periphialsBaseAddrBus:  0x7E000000,
+		//gpioOffset:             0x200000,
+		//memOffset:              4,
 		board2BCM: map[int]int{
 			1:  NoBCMNnm, //3v3 power
 			2:  NoBCMNnm, //5v power
 			3:  2,        //SDA
 			4:  NoBCMNnm, //5v power
 			5:  3,        //SCL
-			6:  0,        //ground
+			6:  NoBCMNnm, //ground
 			7:  4,        //GPCLK0
 			8:  14,       //TXD
 			9:  NoBCMNnm, //ground
@@ -71,10 +75,21 @@ func newChip2837() chip {
 		},
 		gpioRegisters: map[string][]uint64{
 			"GPFSEL": []uint64{0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014},
+			"GPSET":  []uint64{0x7E20001C, 0x7E200020},
 		},
 	}
 
 	return chip
+}
+
+//
+func (chip *Chip2837) getBaseVirtAddress() uint64 {
+	return chip.periphialsBaseAddrVirt
+}
+
+//
+func (chip *Chip2837) getRegisters() map[string][]uint64 {
+	return chip.gpioRegisters
 }
 
 func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
@@ -87,9 +102,8 @@ func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
 }
 
 func (chip *Chip2837) gpgsel(bcm int, mode pinMode) (addressOffset int, operation int) {
-
 	//calculate proper register offset
-	//registerOffset := bcm / 10 //1 register for 10 pins
+	addressOffset = bcm / 10 //1 register for 10 pins
 
 	//calculate operation. all operations are assumed to be 32-bit
 	shift := (uint8(bcm) % 10) * 3 // 10 pins per register, command of 3 bits
@@ -99,12 +113,11 @@ func (chip *Chip2837) gpgsel(bcm int, mode pinMode) (addressOffset int, operatio
 	return addressOffset, operation
 }
 
-func (chip *Chip2837) addressOffset(commandRegister uint64) uint64 {
-	addrOffset := commandRegister - chip.periphialsBaseAddrBus
-	virtualRegisterAddr := chip.periphialsBaseAddrVirt + addrOffset
+func (chip *Chip2837) gpset(bcm int) (addressOffset int, operation int) {
+	addressOffset = bcm / 32 //1 register for 32 pins
 
-	physAddr := virtualRegisterAddr - chip.periphialsBaseAddrVirt // + chip.periphialsBaseAddrPhys
+	shift := (uint8(bcm) % 32)
+	operation = 1 << shift
 
-	return physAddr
-
+	return addressOffset, operation
 }

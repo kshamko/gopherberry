@@ -13,4 +13,4 @@ RaspberryPi & Golang
  - 54 general-purpose I\O (GPIO) lines split into 2 banks
  - All GPIO pins have at least two alternative functions within BCM. The alternate functions are usually peripheral IO and a single peripheral may appear in each bank to allow flexibility on the choice of IO voltage
  - The GPIO peripheral has three dedicated interrupt lines. These lines are triggered by the setting of bits in the event detect status register. Each bank has its’ own interrupt line with the third line shared between all bit
- 
+ -https://bob.cs.sonoma.edu/IntroCompOrg-RPi/sec-gpio-mem.html

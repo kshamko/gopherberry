@@ -4,9 +4,9 @@ import "fmt"
 
 //Pin struct
 type Pin struct {
-	bcmNum int
-	chip   chip
-	//mMap    *mmap
+	bcmNum  int
+	chip    chip
+	mmap    *mmap
 	curMode pinMode
 }
 
@@ -23,6 +23,7 @@ func (p *Pin) ModeOutput() error {
 func (p *Pin) mode(mode pinMode) error {
 
 	addressOffset, operation := p.chip.gpgsel(p.bcmNum, mode)
+
 	fmt.Println(addressOffset, operation)
 
 	/*
