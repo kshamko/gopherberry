@@ -1,7 +1,5 @@
 package gopherberry
 
-import "fmt"
-
 //Pin struct
 type Pin struct {
 	bcmNum  int
@@ -20,22 +18,17 @@ func (p *Pin) ModeOutput() error {
 	return p.mode(pinModeOutput)
 }
 
+//SetHigh sets an output to 1
+func (p *Pin) SetHigh() error {
+	funcName, addressOffset, operation := p.chip.gpset(p.bcmNum)
+	return p.mmap.run(funcName, addressOffset, operation)
+}
+
+//
 func (p *Pin) mode(mode pinMode) error {
-
-	addressOffset, operation := p.chip.gpgsel(p.bcmNum, mode)
-
-	fmt.Println(addressOffset, operation)
-
-	/*
-		//calculate proper register offset
-		registerOffset := p.BCMNum / 10 //1 register for 10 pins
-		//calculate command. all commands are assumed to be 32-bit
-		shift := (uint8(p.BCMNum) % 10) * 3 // 10 pins per register, command of 3 bits
-		command := mode << shift
-		p.curMode = mode
-	*/
-
-	return nil
+	p.curMode = mode
+	funcName, addressOffset, operation := p.chip.gpgsel(p.bcmNum, mode)
+	return p.mmap.run(funcName, addressOffset, operation)
 }
 
 /*
