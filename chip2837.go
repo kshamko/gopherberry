@@ -99,20 +99,16 @@ func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
 func (chip *Chip2837) gpgsel(bcm int, mode pinMode) (registerAddress uint64, operation int) {
 	//calculate proper register offset
 	addressOffset := bcm / 10 //1 register for 10 pins
-
 	//calculate operation. all operations are assumed to be 32-bit
 	shift := (uint8(bcm) % 10) * 3 // 10 pins per register, command of 3 bits
 	operation = int(mode) << shift
-
 	return chip.gpioRegisters["GPFSEL"][addressOffset], operation
 }
 
 //
 func (chip *Chip2837) gpset(bcm int) (registerAddress uint64, operation int) {
 	addressOffset := bcm / 32 //1 register for 32 pins
-
 	shift := (uint8(bcm) % 32)
 	operation = 1 << shift
-
 	return chip.gpioRegisters["GPSET"][addressOffset], operation
 }
