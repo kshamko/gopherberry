@@ -4,6 +4,8 @@ import (
 	"os"
 	"sync"
 	"syscall"
+	"fmt"
+	"unsafe"
 )
 
 //Mmap struct
@@ -12,6 +14,7 @@ type mmap struct {
 	length      int
 	data        []byte
 	mu          sync.RWMutex
+	datap       *[200]int
 }
 
 func newMmap(baseAddress int64, length int) (*mmap, error) {
@@ -34,10 +37,11 @@ func newMmap(baseAddress int64, length int) (*mmap, error) {
 		syscall.MAP_SHARED,
 	)
 
-	/*
-			   map_array := (*[n]int)(unsafe.Pointer(&mmap[0]))
+fmt.Println("!!!!", length, data)
+	
+			   map_array := (*[200]int)(unsafe.Pointer(&data[0]))
 
-			    for i := 0; i < n; i++ {
+			    /*for i := 0; i < n; i++ {
 			        map_array[i] = i * i
 				}
 
@@ -59,6 +63,7 @@ func newMmap(baseAddress int64, length int) (*mmap, error) {
 		baseAddress: baseAddress,
 		length:      length,
 		mu:          sync.RWMutex{},
+		datap: map_array,
 	}, nil
 }
 
@@ -68,7 +73,7 @@ func (mmap *mmap) run(offset int, command int) error {
 	}
 
 	mmap.mu.Lock()
-	mmap.data[offset] = byte(int(mmap.data[offset]) ^ command)
+	mmap.datap[offset] = int(mmap.datap[offset]) ^ command
 	mmap.mu.Unlock()
 
 	return nil

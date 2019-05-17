@@ -110,15 +110,15 @@ func (r *Raspberry) initMmap() error {
 		}
 	}
 
-	/*mmapBaseAddr := mmapBaseAddress(minAddress, r.chip.getBasePeriphialsAddress())
+	mmapBaseAddr := mmapBaseAddress(minAddress, r.chip.getBasePeriphialsAddress())
 	mmapLen := (maxAddress - minAddress) / addressInc
 
 	mmap, err := newMmap(int64(mmapBaseAddr), int(mmapLen))
 
 	if err != nil {
 		return err
-	}*/
-	r.mmap = &mmap{}
+	}
+	r.mmap = mmap
 	r.memOffsets = offsets(r.chip.getGPIORegisters(), minAddress)
 
 	return nil

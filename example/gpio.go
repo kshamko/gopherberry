@@ -24,6 +24,10 @@ func main() {
 	if err != nil {
 		fmt.Println("[ERROR] cant sethigh to pin 17(11)", err)
 	}
+	
+	p26, _ := r.GetPin(37)
+	p26.ModeOutput()
+	p26.SetHigh()
 }
 
 //00 000 000 001 000 000 000 000 000 000 000
