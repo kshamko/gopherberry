@@ -3,8 +3,7 @@ package gopherberry
 //Pin struct
 type Pin struct {
 	bcmNum  int
-	chip    chip
-	mmap    *mmap
+	pi      *Raspberry
 	curMode pinMode
 }
 
@@ -20,15 +19,24 @@ func (p *Pin) ModeOutput() error {
 
 //SetHigh sets an output to 1
 func (p *Pin) SetHigh() error {
-	funcName, addressOffset, operation := p.chip.gpset(p.bcmNum)
-	return p.mmap.run(funcName, addressOffset, operation)
+	address, operation := p.pi.chip.gpset(p.bcmNum)
+	return p.runCommand(address, operation)
 }
 
 //
 func (p *Pin) mode(mode pinMode) error {
 	p.curMode = mode
-	funcName, addressOffset, operation := p.chip.gpgsel(p.bcmNum, mode)
-	return p.mmap.run(funcName, addressOffset, operation)
+	address, operation := p.pi.chip.gpgsel(p.bcmNum, mode)
+	return p.runCommand(address, operation)
+}
+
+//
+func (p *Pin) runCommand(address uint64, operation int) error {
+	offset, ok := p.pi.memOffsets[address]
+	if !ok {
+		return ErrNoOffset
+	}
+	return p.pi.mmap.run(offset, operation)
 }
 
 /*
