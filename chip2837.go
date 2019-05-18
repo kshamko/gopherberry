@@ -68,8 +68,19 @@ func newChip2837() chip {
 			40: 21,       //SCLK
 		},
 		gpioRegisters: map[string][]uint64{
-			"GPFSEL": {0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014},
-			"GPSET":  {0x7E20001C, 0x7E200020},
+			"GPFSEL":   {0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014}, //rw
+			"GPSET":    {0x7E20001C, 0x7E200020},                                                 // w
+			"GPCLR":    {0x7E200028, 0x7E20002C},                                                 // w
+			"GPLEV":    {0x7E200034, 0x7E200038},                                                 // r
+			"GPEDS":    {0x7E200040, 0x7E200044},                                                 // rw
+			"GPREN":    {0x7E20004C, 0x7E200050},                                                 //rw
+			"GPFEN":    {0x7E200058, 0x7E20005C},                                                 //rw
+			"GPHEN":    {0x7E200064, 0x7E200068},                                                 //rw
+			"GPLEN":    {0x7E200070, 0x7E200074},                                                 //rw
+			"GPAREN":   {0x7E20007C, 0x7E200080},                                                 //rw
+			"GPAFEN":   {0x7E200088, 0x7E20008C},                                                 //rw
+			"GPPUD":    {0x7E200094},                                                             //rw
+			"GPPUDCLK": {0x7E200098, 0x7E20009C},                                                 //rw
 		},
 	}
 
@@ -107,8 +118,17 @@ func (chip *Chip2837) gpgsel(bcm int, mode pinMode) (registerAddress uint64, ope
 
 //
 func (chip *Chip2837) gpset(bcm int) (registerAddress uint64, operation int) {
+	return chip.twoBankCommand(bcm, "GPSET")
+}
+
+//
+func (chip *Chip2837) gpclr(bcm int) (registerAddress uint64, operation int) {
+	return chip.twoBankCommand(bcm, "GPCLR")
+}
+
+func (chip *Chip2837) twoBankCommand(bcm int, commandName string) (registerAddress uint64, operation int) {
 	addressOffset := bcm / 32 //1 register for 32 pins
 	shift := (uint8(bcm) % 32)
 	operation = 1 << shift
-	return chip.gpioRegisters["GPSET"][addressOffset], operation
+	return chip.gpioRegisters[commandName][addressOffset], operation
 }
