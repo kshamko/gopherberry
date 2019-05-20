@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kshamko/gopherberry"
 )
@@ -24,10 +25,24 @@ func main() {
 	if err != nil {
 		fmt.Println("[ERROR] cant sethigh to pin 17(11)", err)
 	}
-	
+
 	p26, _ := r.GetPin(37)
 	p26.ModeOutput()
 	p26.SetHigh()
+
+	l, _ := p17.Level()
+	fmt.Println("[INFO] pin17 level:", l)
+
+	time.Sleep(1000 * time.Millisecond)
+
+	p26.SetLow()
+
+	l, _ = p17.Level()
+	fmt.Println("[INFO] pin17 level:", l)
+
+	l, _ = p26.Level()
+	fmt.Println("[INFO] pin26 level:", l)
+
 }
 
 //00 000 000 001 000 000 000 000 000 000 000

@@ -17,10 +17,38 @@ func (p *Pin) ModeOutput() error {
 	return p.mode(pinModeOutput)
 }
 
+//GetMode func
+//@todo implement
+func (p *Pin) GetMode() pinMode {
+	return p.curMode
+}
+
 //SetHigh sets an output to 1
 func (p *Pin) SetHigh() error {
 	address, operation := p.pi.chip.gpset(p.bcmNum)
 	return p.runCommand(address, operation)
+}
+
+//SetLow sets an output to 0
+func (p *Pin) SetLow() error {
+	address, operation := p.pi.chip.gpclr(p.bcmNum)
+	return p.runCommand(address, operation)
+}
+
+//Level reports pin output state
+func (p *Pin) Level() (bool, error) {
+
+	address, operation := p.pi.chip.gplev(p.bcmNum)
+	state, err := p.memState(address)
+	if err != nil {
+		return false, err
+	}
+
+	if state&operation == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 //
@@ -37,6 +65,15 @@ func (p *Pin) runCommand(address uint64, operation int) error {
 		return ErrNoOffset
 	}
 	return p.pi.mmap.run(offset, operation)
+}
+
+//
+func (p *Pin) memState(address uint64) (int, error) {
+	offset, ok := p.pi.memOffsets[address]
+	if !ok {
+		return 0, ErrNoOffset
+	}
+	return p.pi.mmap.get(offset)
 }
 
 /*

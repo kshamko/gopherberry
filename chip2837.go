@@ -126,6 +126,11 @@ func (chip *Chip2837) gpclr(bcm int) (registerAddress uint64, operation int) {
 	return chip.twoBankCommand(bcm, "GPCLR")
 }
 
+//
+func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, operation int) {
+	return chip.twoBankCommand(bcm, "GPLEV")
+}
+
 func (chip *Chip2837) twoBankCommand(bcm int, commandName string) (registerAddress uint64, operation int) {
 	addressOffset := bcm / 32 //1 register for 32 pins
 	shift := (uint8(bcm) % 32)

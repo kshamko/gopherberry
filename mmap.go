@@ -4,7 +4,6 @@ import (
 	"os"
 	"sync"
 	"syscall"
-	"fmt"
 	"unsafe"
 )
 
@@ -37,22 +36,7 @@ func newMmap(baseAddress int64, length int) (*mmap, error) {
 		syscall.MAP_SHARED,
 	)
 
-fmt.Println("!!!!", length, data)
-	
-			   map_array := (*[200]int)(unsafe.Pointer(&data[0]))
-
-			    /*for i := 0; i < n; i++ {
-			        map_array[i] = i * i
-				}
-
-				//after all
-
-		    err = syscall.Munmap(data)
-		    if err != nil {
-		        fmt.Println(err)
-		        os.Exit(1)
-		    }
-	*/
+	mmapArray := (*[200]int)(unsafe.Pointer(&data[0]))
 
 	if err != nil {
 		return nil, err
@@ -63,7 +47,7 @@ fmt.Println("!!!!", length, data)
 		baseAddress: baseAddress,
 		length:      length,
 		mu:          sync.RWMutex{},
-		datap: map_array,
+		datap:       mmapArray,
 	}, nil
 }
 
@@ -77,4 +61,15 @@ func (mmap *mmap) run(offset int, command int) error {
 	mmap.mu.Unlock()
 
 	return nil
+}
+
+func (mmap *mmap) get(offset int) (state int, err error) {
+	if len(mmap.data) < offset {
+		return 0, ErrNoMmap
+	}
+
+	mmap.mu.Lock()
+	defer mmap.mu.Unlock()
+
+	return mmap.datap[offset], nil
 }

@@ -52,6 +52,8 @@ type chip interface {
 
 	gpgsel(bcm int, mode pinMode) (registerAddress uint64, operation int)
 	gpset(bcm int) (registerAddress uint64, operation int)
+	gpclr(bcm int) (registerAddress uint64, operation int)
+	gplev(bcm int) (registerAddress uint64, operation int)
 }
 
 //New func
