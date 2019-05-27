@@ -1,0 +1,24 @@
+
+
+ARM vs x86
+
+https://www.quora.com/Whats-the-difference-between-ARM-and-x86-processors
+https://en.wikipedia.org/wiki/Load%E2%80%93store_architecture
+
+https://en.wikipedia.org/wiki/Processor_register
+https://www.bottomupcs.com/chapter02.xhtml
+
+To greatly simplify, a computer consists of a central processing unit (CPU) attached to memory. The figure above illustrates the general principle behind all computer operations.
+https://www.computerhope.com/jargon/c/clockcyc.htm
+
+??? https://www.raspberrypi.org/forums/viewtopic.php?t=203607 ???
+
+---------------------
+DMA
+Since the speed of devices is far below the speed of processors, there needs to be some way to avoid making the CPU wait around for data from devices.
+Direct Memory Access (DMA) is a method of transferring data directly between an peripheral and system RAM.
+The driver can setup a device to do a DMA transfer by giving it the area of RAM to put its data into. It can then start the DMA transfer and allow the CPU to continue with other tasks.
+Once the device is finished, it will raise an interrupt and signal to the driver the transfer is complete. From this time the data from the device (say a file from a disk, or frames from a video capture card) is in memory and ready to be used.
+----------------
+
+
