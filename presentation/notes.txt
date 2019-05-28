@@ -22,3 +22,9 @@ Once the device is finished, it will raise an interrupt and signal to the driver
 ----------------
 
 
+https://linuxhint.com/linux-kernel-tutorial-beginners/
+
+------------------
+But why do I have to specify index 0 of the slice?
+
+If you’re familiar with slice internals, you’ll know that a slice is actually a header and a pointer to an underlying array. When converting slice data using unsafe.Pointer, you have to specify the memory address of the first element of the array, not the slice header itself.
