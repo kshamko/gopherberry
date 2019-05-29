@@ -57,8 +57,10 @@ func (mmap *mmap) run(offset int, command int) error {
 	}
 
 	mmap.mu.Lock()
-	//mmap.datap[offset] = int(mmap.datap[offset]) & command
-	mmap.data[offset] = byte(command)
+	//mmap.datap[offset] = command
+	p := &mmap.data[offset]
+	*p = byte(command)
+	//addr = &command
 	mmap.mu.Unlock()
 
 	return nil

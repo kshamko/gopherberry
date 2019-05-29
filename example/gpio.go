@@ -43,6 +43,9 @@ func main() {
 	l, _ = p26.Level()
 	fmt.Println("[INFO] pin26 level:", l)
 
+	time.Sleep(2000 * time.Millisecond)
+	p17.SetLow()
+
 }
 
 //00 000 000 001 000 000 000 000 000 000 000
