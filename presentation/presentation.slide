@@ -4,7 +4,7 @@ Kanstantsin Shamko
 Erlang developer at [[https://www.idt.net/][IDT]]
 
 * Agenda 
-- What is ARM\RISC\RaspberryPi
+- What is RaspberryPi
 - BCM chip & peripherals, GPIO
 - Memory management & CPU
 - System calls, mmap
@@ -95,6 +95,7 @@ To set *ALT3* mode for pin19 we need:
 .code code/sample.go /^func writeCommand/,/^}/
 
 * Links
+- https://elinux.org/RPi_Hardware
 - http://man7.org/linux/man-pages/man2/syscalls.2.html
 - http://man7.org/linux/man-pages/man2/mmap.2.html
 - http://man7.org/linux/man-pages/man4/mem.4.html

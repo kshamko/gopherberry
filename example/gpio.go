@@ -28,14 +28,15 @@ func main() {
 
 	p26, _ := r.GetPin(37)
 	p26.ModeOutput()
-	p26.SetHigh()
 
 	l, _ := p17.Level()
 	fmt.Println("[INFO] pin17 level:", l)
 
-	time.Sleep(1000 * time.Millisecond)
-
-	p26.SetLow()
+	for i := 0; i < 5; i++ {
+		p26.SetHigh()
+		time.Sleep(1000 * time.Millisecond)
+		p26.SetLow()
+	}
 
 	l, _ = p17.Level()
 	fmt.Println("[INFO] pin17 level:", l)
