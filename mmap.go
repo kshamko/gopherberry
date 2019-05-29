@@ -1,7 +1,6 @@
 package gopherberry
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"syscall"
@@ -58,9 +57,7 @@ func (mmap *mmap) run(offset int, command int) error {
 	}
 
 	mmap.mu.Lock()
-
-	fmt.Printf("[DEBUG] mmap state. Offset: %d, Addr: %X, byte: %X\n", offset, mmap.datap[offset], mmap.data[offset])
-
+	//fmt.Printf("[DEBUG] mmap state. Offset: %d, Addr: %X, byte: %X\n", offset, mmap.datap[offset], mmap.data[offset])
 	mmap.datap[offset] = command
 	mmap.mu.Unlock()
 
