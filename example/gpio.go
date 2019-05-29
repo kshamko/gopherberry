@@ -34,8 +34,9 @@ func main() {
 
 	for i := 0; i < 5; i++ {
 		p26.SetHigh()
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 		p26.SetLow()
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	l, _ = p17.Level()
