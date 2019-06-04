@@ -23,7 +23,7 @@ func main() {
 
 	err = p17.SetHigh()
 	if err != nil {
-		fmt.Println("[ERROR] cant sethigh to pin 17(11)", err)
+		fmt.Println("[ERROR] cant set high to pin 17(11)", err)
 	}
 
 	p26, _ := r.GetPin(37)

@@ -1,11 +1,24 @@
 package gopherberry
 
+import (
+	"fmt"
+	"os/exec"
+)
+
 //Pin struct
 type Pin struct {
 	bcmNum  int
 	pi      *Raspberry
 	curMode pinMode
 }
+
+type EdgeType int
+
+const (
+	EdgeHigh EdgeType = 1
+	EdgeLow  EdgeType = 2
+	EdgeBoth EdgeType = 3
+)
 
 //ModeInput sets pin to input mode
 func (p *Pin) ModeInput() error {
@@ -49,6 +62,20 @@ func (p *Pin) Level() (bool, error) {
 	}
 
 	return true, nil
+}
+
+//DetectEdge func
+func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
+	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, "rising")
+	out, err := exec.Command(command).Output()
+
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("[DEBUG] command output: ", string(out))
+
+	fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.bcmNum)
+	return nil, nil
 }
 
 //
