@@ -74,7 +74,9 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 	}
 	fmt.Println("[DEBUG] command output: ", string(out))
 
-	fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.bcmNum)
+	///sys/class/gpio/gpio%d/value
+	//fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.bcmNum)
+
 	return nil, nil
 }
 
