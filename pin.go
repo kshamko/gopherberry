@@ -12,12 +12,13 @@ type Pin struct {
 	curMode pinMode
 }
 
-type EdgeType int
+type EdgeType string
 
 const (
-	EdgeHigh EdgeType = 1
-	EdgeLow  EdgeType = 2
-	EdgeBoth EdgeType = 3
+	EdgeHigh EdgeType = "rising"
+	EdgeLow  EdgeType = "falling"
+	EdgeBoth EdgeType = "both"
+	EdgeNone EdgeType = "none"
 )
 
 //ModeInput sets pin to input mode
@@ -66,7 +67,7 @@ func (p *Pin) Level() (bool, error) {
 
 //DetectEdge func
 func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
-	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, "rising")
+	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, edge)
 	out, err := exec.Command(command).Output()
 
 	if err != nil {
