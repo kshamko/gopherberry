@@ -68,17 +68,38 @@ func (p *Pin) Level() (bool, error) {
 //DetectEdge func
 func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, edge)
-	out, err := exec.Command(command).Output()
-
+	_, err := exec.Command(command).Output()
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("[DEBUG] command output: ", string(out))
 
-	///sys/class/gpio/gpio%d/value
-	//fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.bcmNum)
+	fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/value", p.bcmNum)
+	ep, err := NewEpoll(fileName)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	c := ep.Start()
+	ch := make(chan EdgeType)
+
+	go func() {
+		for {
+			data, ok := <-c
+			if ok {
+				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
+					ch <- EdgeHigh
+				}
+
+				if data[0] == 48 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
+					ch <- EdgeLow
+				}
+			} else {
+				return
+			}
+		}
+	}()
+
+	return ch, nil
 }
 
 //

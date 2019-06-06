@@ -2,6 +2,42 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/kshamko/gopherberry"
+)
+
+//
+// Trigger it with "$ date | sudo tee /dev/kmsg"
+//
+func main() {
+
+	defer fmt.Println("Stopped")
+
+	ep, _ := gopherberry.NewEpoll("/dev/kmsg")
+	c := ep.Start()
+
+	fmt.Println("started")
+	x := 0
+	for {
+		select {
+		case _, ok := <-c:
+
+			if !ok {
+				fmt.Println("closed")
+				return
+			}
+			x++
+			fmt.Println("changed", x, "times")
+
+			if x == 3 {
+				ep.Stop()
+			}
+		}
+	}
+}
+
+/*import (
+	"fmt"
 	"os"
 	"syscall"
 )
@@ -75,7 +111,7 @@ func main() {
 		/*fmt.Println(nevents)
 		for ev := 0; ev < nevents; ev++ {
 			go echo(int(events[ev].Fd), syscall.Stdout)
-		}*/
+		}
 
 	}
-}
+}*/
