@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/kshamko/gopherberry"
 )
@@ -13,7 +14,12 @@ func main() {
 
 	defer fmt.Println("Stopped")
 
-	ep, _ := gopherberry.NewEpoll("/sys/class/gpio/gpio21/value")
+	ep, err := gopherberry.NewEpoll("/sys/class/gpio/gpio21/value")
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	fmt.Println("started")
 	x := 0
