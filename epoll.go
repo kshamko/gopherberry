@@ -71,7 +71,7 @@ func (ep *Epoll) Wait() chan []byte {
 			}
 			//
 			//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
-			syscall.Seek(int(ep.event.Fd), 0, 2)
+			//syscall.Seek(int(ep.event.Fd), 0, 2)
 			i, err := syscall.Read(int(ep.event.Fd), buf[:])
 
 			if i == -1 {
