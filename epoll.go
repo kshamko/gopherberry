@@ -52,10 +52,10 @@ func (ep *Epoll) Wait() chan []byte {
 	ep.stopChan = make(chan struct{}, 1)
 
 	//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
-	syscall.Seek(int(ep.event.Fd), 0, 2)
+	//syscall.Seek(int(ep.event.Fd), 0, 2)
 
 	go func() {
-		var buf [1024]byte
+		var buf [1]byte
 
 		//could be blocked and stop will not work properly. (on the next iteration)
 		//@todo try to implement epoll interrupt with signal call
