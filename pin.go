@@ -68,7 +68,7 @@ func (p *Pin) Level() (bool, error) {
 //DetectEdge func
 func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, edge)
-	_, err := exec.Command(command).Output()
+	_, err := exec.Command("/bin/bash", "-c", command).Output()
 	if err != nil {
 		return nil, err
 	}
