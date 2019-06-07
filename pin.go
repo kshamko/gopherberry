@@ -86,6 +86,8 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 			c := ep.Wait()
 			data, ok := <-c
 			if ok {
+				fmt.Println(data)
+
 				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
 					ch <- EdgeHigh
 				}
