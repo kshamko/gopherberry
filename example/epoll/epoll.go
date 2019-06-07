@@ -14,7 +14,7 @@ func main() {
 
 	defer fmt.Println("Stopped")
 
-	ep, err := gopherberry.NewEpoll("/sys/class/gpio/gpio21/value")
+	ep, err := gopherberry.NewEpoll("/dev/kmsg")
 
 	if err != nil {
 		fmt.Println(err)
@@ -35,7 +35,7 @@ func main() {
 			x++
 			fmt.Println("changed", x, "times")
 
-			if x == 30000000 {
+			if x == 3 {
 				return
 			}
 		}

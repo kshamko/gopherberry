@@ -22,7 +22,7 @@ func NewEpoll(fileName string) (*Epoll, error) {
 		return nil, err
 	}
 
-	epfd, err := syscall.EpollCreate(1)
+	epfd, err := syscall.EpollCreate1(0)
 	if err != nil {
 		return nil, err
 	}
@@ -55,35 +55,44 @@ func (ep *Epoll) Wait() chan []byte {
 
 	go func() {
 		var buf [1024]byte
+		for {
+			//could be blocked and stop will not work properly. (on the next iteration)
+			//@todo try to implement epoll interrupt with signal call
+			num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
 
-		//could be blocked and stop will not work properly. (on the next iteration)
-		//@todo try to implement epoll interrupt with signal call
-		num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
+			fmt.Println("!!!!i!!!", err, num)
+			if num == -1 {
+				//continue
+				return
+			}
+			// @todo improve handling
+			if err != nil {
+				close(c)
+				//ep.Stop()
 
-		if num == -1 {
-			fmt.Println("!!!!", num)
-			//return
-		}
-		// @todo improve handling
-		if err != nil {
-			fmt.Println("!!!!", err)
-			//return
-			//do smth?
-		}
-		//
-		i, err := syscall.Read(int(ep.event.Fd), buf[:])
+				return
+			}
+			//
+			i, err := syscall.Read(int(ep.event.Fd), buf[:])
 
-		if i == -1 {
-			fmt.Println("!!!!i!!!", i)
+			if i == -1 {
+				fmt.Println("!!!!i!!!", i)
+				continue
+				//return
+			}
+			if err != nil {
+				fmt.Println("!!!!i!!!", err)
+				close(c)
+				//ep.Stop()
+
+				return
+				//do smth
+			}
+			c <- buf[:]
+			close(c)
+			//ep.Stop()
 			//return
 		}
-		if err != nil {
-			fmt.Println("!!!!i!!!", err)
-			//return
-			//do smth
-		}
-		c <- buf[:]
-		ep.Stop()
 	}()
 
 	return c
@@ -92,8 +101,8 @@ func (ep *Epoll) Wait() chan []byte {
 //Stop func.
 // Has known issue when stop happens on the next iteration of EpollWait
 func (ep *Epoll) Stop() error {
-	syscall.Close(ep.epfd) //call to trigger error of EpollWait
-	ep.file.Close()
-	syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
+	//syscall.Close(ep.epfd) //call to trigger error of EpollWait
+	//ep.file.Close()
+	//syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
 	return nil
 }
