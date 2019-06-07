@@ -13,7 +13,7 @@ func main() {
 
 	defer fmt.Println("Stopped")
 
-	ep, _ := gopherberry.NewEpoll("/dev/kmsg")
+	ep, _ := gopherberry.NewEpoll("/sys/class/gpio/gpio21/value")
 
 	fmt.Println("started")
 	x := 0
