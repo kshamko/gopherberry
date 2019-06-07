@@ -50,9 +50,6 @@ func (ep *Epoll) Wait() chan []byte {
 
 	c := make(chan []byte)
 
-	//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
-	syscall.Seek(int(ep.event.Fd), 0, 2)
-
 	go func() {
 		var buf [1024]byte
 		for {
@@ -73,6 +70,8 @@ func (ep *Epoll) Wait() chan []byte {
 				return
 			}
 			//
+			//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
+			syscall.Seek(int(ep.event.Fd), 0, 2)
 			i, err := syscall.Read(int(ep.event.Fd), buf[:])
 
 			if i == -1 {
