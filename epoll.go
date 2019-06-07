@@ -29,8 +29,8 @@ func NewEpoll(fileName string) (*Epoll, error) {
 
 	EPOLLET := uint32(1 << 31)
 	event := syscall.EpollEvent{
-		Events:/*syscall.EPOLLIN |*/ syscall.EPOLLPRI | EPOLLET | syscall.EPOLLERR,
-		Fd: int32(file.Fd()),
+		Events: syscall.EPOLLIN | syscall.EPOLLPRI | EPOLLET | syscall.EPOLLERR,
+		Fd:     int32(file.Fd()),
 	}
 
 	err = syscall.EpollCtl(epfd, syscall.EPOLL_CTL_ADD, int(file.Fd()), &event)
@@ -50,6 +50,8 @@ func (ep *Epoll) Wait() chan []byte {
 
 	c := make(chan []byte)
 	ep.stopChan = make(chan struct{}, 1)
+
+	//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
 	syscall.Seek(int(ep.event.Fd), 0, 2)
 
 	go func() {
@@ -69,6 +71,7 @@ func (ep *Epoll) Wait() chan []byte {
 		}
 		//
 		i, err := syscall.Read(int(ep.event.Fd), buf[:])
+
 		if i == -1 {
 			return
 		}
@@ -77,6 +80,7 @@ func (ep *Epoll) Wait() chan []byte {
 			//do smth
 		}
 		c <- buf[:]
+		ep.Stop()
 	}()
 
 	return c

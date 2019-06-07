@@ -21,13 +21,14 @@ func main() {
 	p40, _ := r.GetPin(40)
 	p40.ModeInput()
 
-	for {
-		c, err := p40.DetectEdge(gopherberry.EdgeBoth)
+	c, err := p40.DetectEdge(gopherberry.EdgeBoth)
 
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	for {
 
 		fmt.Println("Wait edge")
 		edge := <-c
