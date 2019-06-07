@@ -29,9 +29,9 @@ func main() {
 			x++
 			fmt.Println("changed", x, "times")
 
-			//if x == 3 {
-			//	return
-			//}
+			if x == 30000000 {
+				return
+			}
 		}
 	}
 }
