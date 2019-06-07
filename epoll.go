@@ -55,7 +55,7 @@ func (ep *Epoll) Wait() chan []byte {
 	syscall.Seek(int(ep.event.Fd), 0, 2)
 
 	go func() {
-		var buf [1]byte
+		var buf [1024]byte
 
 		//could be blocked and stop will not work properly. (on the next iteration)
 		//@todo try to implement epoll interrupt with signal call
