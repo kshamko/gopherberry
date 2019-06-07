@@ -88,11 +88,11 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 			if ok {
 				fmt.Println(data)
 
-				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
+				if edge == EdgeBoth || edge == EdgeHigh { //check 1
 					ch <- EdgeHigh
 				}
 
-				if data[0] == 48 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
+				if edge == EdgeBoth || edge == EdgeLow { //check 0
 					ch <- EdgeLow
 				}
 			} else {

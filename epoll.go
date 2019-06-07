@@ -29,8 +29,8 @@ func NewEpoll(fileName string) (*Epoll, error) {
 
 	EPOLLET := uint32(1 << 31)
 	event := syscall.EpollEvent{
-		Events: syscall.EPOLLIN | syscall.EPOLLPRI | EPOLLET | syscall.EPOLLERR,
-		Fd:     int32(file.Fd()),
+		Events:/*syscall.EPOLLIN |*/ syscall.EPOLLPRI | EPOLLET | syscall.EPOLLERR,
+		Fd: int32(file.Fd()),
 	}
 
 	err = syscall.EpollCtl(epfd, syscall.EPOLL_CTL_ADD, int(file.Fd()), &event)
