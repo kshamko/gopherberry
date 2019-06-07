@@ -1,13 +1,8 @@
 package gopherberry
 
 import (
-	"fmt"
 	"os"
 	"syscall"
-)
-
-const (
-	EPOLLERR = 0x008
 )
 
 //Epoll entity
@@ -32,8 +27,9 @@ func NewEpoll(fileName string) (*Epoll, error) {
 		return nil, err
 	}
 
+	EPOLLET := uint32(1 << 31)
 	event := syscall.EpollEvent{
-		Events: syscall.EPOLLIN | syscall.EPOLLPRI | EPOLLERR,
+		Events: syscall.EPOLLIN | syscall.EPOLLPRI | EPOLLET | syscall.EPOLLERR,
 		Fd:     int32(file.Fd()),
 	}
 
@@ -49,8 +45,8 @@ func NewEpoll(fileName string) (*Epoll, error) {
 	}, nil
 }
 
-//Start func
-func (ep *Epoll) Start() chan []byte {
+//Wait func
+func (ep *Epoll) Wait() chan []byte {
 
 	c := make(chan []byte)
 	ep.stopChan = make(chan struct{}, 1)
@@ -58,40 +54,29 @@ func (ep *Epoll) Start() chan []byte {
 
 	go func() {
 		var buf [1024]byte
-		for {
 
-			select {
-			case <-ep.stopChan:
-				syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
-				ep.file.Close()
-				close(c)
-				return
-			default:
-				//could be blocked and stop will not work properly. (on the next iteration)
-				//@todo try to implement epoll interrupt with signal call
-				num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
+		//could be blocked and stop will not work properly. (on the next iteration)
+		//@todo try to implement epoll interrupt with signal call
+		num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
 
-				if num == -1 {
-					continue
-				}
-				// @todo improve handling
-				if err != nil {
-					continue
-					//do smth?
-				}
-				//
-				i, err := syscall.Read(int(ep.event.Fd), buf[:])
-				if i == -1 {
-					continue
-				}
-				if err != nil {
-					fmt.Println("err:", err)
-					continue
-					//do smth
-				}
-				c <- buf[:]
-			}
+		if num == -1 {
+			return
 		}
+		// @todo improve handling
+		if err != nil {
+			return
+			//do smth?
+		}
+		//
+		i, err := syscall.Read(int(ep.event.Fd), buf[:])
+		if i == -1 {
+			return
+		}
+		if err != nil {
+			return
+			//do smth
+		}
+		c <- buf[:]
 	}()
 
 	return c
@@ -100,9 +85,8 @@ func (ep *Epoll) Start() chan []byte {
 //Stop func.
 // Has known issue when stop happens on the next iteration of EpollWait
 func (ep *Epoll) Stop() error {
-
-	err := syscall.Close(ep.epfd) //call to trigger error of EpollWait
-	ep.stopChan <- struct{}{}
-
-	return err
+	syscall.Close(ep.epfd) //call to trigger error of EpollWait
+	ep.file.Close()
+	syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
+	return nil
 }

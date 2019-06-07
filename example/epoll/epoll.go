@@ -14,11 +14,11 @@ func main() {
 	defer fmt.Println("Stopped")
 
 	ep, _ := gopherberry.NewEpoll("/dev/kmsg")
-	c := ep.Start()
 
 	fmt.Println("started")
 	x := 0
 	for {
+		c := ep.Wait()
 		select {
 		case _, ok := <-c:
 
@@ -30,7 +30,7 @@ func main() {
 			fmt.Println("changed", x, "times")
 
 			if x == 3 {
-				ep.Stop()
+				return
 			}
 		}
 	}

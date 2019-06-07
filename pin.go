@@ -79,11 +79,11 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 		return nil, err
 	}
 
-	c := ep.Start()
 	ch := make(chan EdgeType)
 
 	go func() {
 		for {
+			c := ep.Wait()
 			data, ok := <-c
 			if ok {
 				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
