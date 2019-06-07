@@ -51,7 +51,7 @@ func (ep *Epoll) Wait() chan []byte {
 	c := make(chan []byte)
 
 	go func() {
-		var buf [1024]byte
+		var buf [1]byte
 		for {
 			//could be blocked and stop will not work properly. (on the next iteration)
 			//@todo try to implement epoll interrupt with signal call
@@ -88,7 +88,7 @@ func (ep *Epoll) Wait() chan []byte {
 				//do smth
 			}
 			c <- buf[:]
-			close(c)
+			//close(c)
 			//ep.Stop()
 			//return
 		}
@@ -100,8 +100,8 @@ func (ep *Epoll) Wait() chan []byte {
 //Stop func.
 // Has known issue when stop happens on the next iteration of EpollWait
 func (ep *Epoll) Stop() error {
-	//syscall.Close(ep.epfd) //call to trigger error of EpollWait
-	//ep.file.Close()
-	//syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
+	syscall.Close(ep.epfd) //call to trigger error of EpollWait
+	ep.file.Close()
+	syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
 	return nil
 }
