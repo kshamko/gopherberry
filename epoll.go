@@ -51,8 +51,10 @@ func (ep *Epoll) Wait() chan []byte {
 	c := make(chan []byte)
 
 	go func() {
+		cnt := 0
 		var buf [1]byte
 		for {
+			cnt++
 			//could be blocked and stop will not work properly. (on the next iteration)
 			//@todo try to implement epoll interrupt with signal call
 			num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
@@ -86,6 +88,9 @@ func (ep *Epoll) Wait() chan []byte {
 
 				return
 				//do smth
+			}
+			if cnt == 1 {
+				continue
 			}
 			c <- buf[:]
 			close(c)
