@@ -52,7 +52,7 @@ func (ep *Epoll) Wait() chan []byte {
 
 	go func() {
 		cnt := 0
-		var buf [1]byte
+		var buf [1024]byte
 		for {
 			cnt++
 			//could be blocked and stop will not work properly. (on the next iteration)
@@ -73,7 +73,7 @@ func (ep *Epoll) Wait() chan []byte {
 			}
 			//
 			//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
-			//syscall.Seek(int(ep.event.Fd), 0, 2)
+			syscall.Seek(int(ep.event.Fd), 0, 1) //
 			i, err := syscall.Read(int(ep.event.Fd), buf[:])
 
 			if i == -1 {
