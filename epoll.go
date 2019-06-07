@@ -88,7 +88,8 @@ func (ep *Epoll) Wait() chan []byte {
 				//do smth
 			}
 			c <- buf[:]
-			//close(c)
+			close(c)
+			return
 			//ep.Stop()
 			//return
 		}
