@@ -1,16 +1,16 @@
 package gopherberry
 
 import (
+	"fmt"
 	"os"
 	"syscall"
 )
 
 //Epoll entity
 type Epoll struct {
-	file     *os.File
-	epfd     int
-	event    syscall.EpollEvent
-	stopChan chan struct{}
+	file  *os.File
+	epfd  int
+	event syscall.EpollEvent
 }
 
 //NewEpoll func
@@ -49,7 +49,6 @@ func NewEpoll(fileName string) (*Epoll, error) {
 func (ep *Epoll) Wait() chan []byte {
 
 	c := make(chan []byte)
-	ep.stopChan = make(chan struct{}, 1)
 
 	//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
 	syscall.Seek(int(ep.event.Fd), 0, 2)
@@ -62,21 +61,25 @@ func (ep *Epoll) Wait() chan []byte {
 		num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
 
 		if num == -1 {
-			return
+			fmt.Println("!!!!", num)
+			//return
 		}
 		// @todo improve handling
 		if err != nil {
-			return
+			fmt.Println("!!!!", err)
+			//return
 			//do smth?
 		}
 		//
 		i, err := syscall.Read(int(ep.event.Fd), buf[:])
 
 		if i == -1 {
-			return
+			fmt.Println("!!!!i!!!", i)
+			//return
 		}
 		if err != nil {
-			return
+			fmt.Println("!!!!i!!!", err)
+			//return
 			//do smth
 		}
 		c <- buf[:]
