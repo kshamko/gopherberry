@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -21,21 +22,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := context.Background()
 	fmt.Println("started")
 	x := 0
+
 	for {
-		c := ep.Wait()
+		c := ep.Wait(ctx)
 		select {
-		case _, ok := <-c:
+		case data, ok := <-c:
 
 			if !ok {
 				fmt.Println("closed")
 				return
 			}
 			x++
-			fmt.Println("changed", x, "times")
+			fmt.Println("changed", x, "times", string(data))
 
 			if x == 3 {
+				ep.Stop()
+				fmt.Println("stop")
 				return
 			}
 		}

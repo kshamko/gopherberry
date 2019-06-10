@@ -1,6 +1,7 @@
 package gopherberry
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 )
@@ -80,10 +81,10 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 	}
 
 	ch := make(chan EdgeType)
-
+	ctx := context.Background()
 	go func() {
 		for {
-			c := ep.Wait()
+			c := ep.Wait(ctx)
 			data, ok := <-c
 			if ok {
 				fmt.Println(data)
