@@ -1,16 +1,22 @@
 package gopherberry
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"os/exec"
+	"sync"
 )
 
 //Pin struct
 type Pin struct {
-	bcmNum  int
-	pi      *Raspberry
-	curMode pinMode
+	bcmNum int
+	pi     *Raspberry
+	mu     sync.Mutex
+
+	curMode      pinMode
+	edgeChan     chan EdgeType
+	edgeToDetect EdgeType
+	epoll        *Epoll
 }
 
 type EdgeType string
@@ -20,6 +26,11 @@ const (
 	EdgeLow  EdgeType = "falling"
 	EdgeBoth EdgeType = "both"
 	EdgeNone EdgeType = "none"
+)
+
+var (
+	//ErrBadPinMode triggered when pin is not in a correct mode to call a function
+	ErrBadPinMode = errors.New("pin is in the wrong mode")
 )
 
 //ModeInput sets pin to input mode
@@ -40,18 +51,35 @@ func (p *Pin) GetMode() pinMode {
 
 //SetHigh sets an output to 1
 func (p *Pin) SetHigh() error {
+	if p.curMode != pinModeOutput {
+		return ErrBadPinMode
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	address, operation := p.pi.chip.gpset(p.bcmNum)
 	return p.runCommand(address, operation)
 }
 
 //SetLow sets an output to 0
 func (p *Pin) SetLow() error {
+	if p.curMode != pinModeOutput {
+		return ErrBadPinMode
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	address, operation := p.pi.chip.gpclr(p.bcmNum)
 	return p.runCommand(address, operation)
 }
 
 //Level reports pin output state
 func (p *Pin) Level() (bool, error) {
+	if p.curMode != pinModeOutput {
+		return false, ErrBadPinMode
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	address, operation := p.pi.chip.gplev(p.bcmNum)
 	state, err := p.memState(address)
@@ -67,11 +95,21 @@ func (p *Pin) Level() (bool, error) {
 }
 
 //DetectEdge func
-func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
+func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
+	if p.curMode != pinModeInput {
+		return nil, ErrBadPinMode
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, edge)
 	_, err := exec.Command("/bin/bash", "-c", command).Output()
 	if err != nil {
 		return nil, err
+	}
+
+	if edge == EdgeNone {
+		return nil, p.detectEdgeStop()
 	}
 
 	fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/value", p.bcmNum)
@@ -80,21 +118,21 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 		return nil, err
 	}
 
-	ch := make(chan EdgeType)
-	ctx := context.Background()
+	p.epoll = ep
+	p.edgeChan = make(chan EdgeType)
+
 	go func() {
 		for {
-			c := ep.Wait(ctx)
+			c := ep.Wait(SeekSet)
 			data, ok := <-c
 			if ok {
-				fmt.Println(data)
 
 				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
-					ch <- EdgeHigh
+					p.edgeChan <- EdgeHigh
 				}
 
 				if data[0] == 48 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
-					ch <- EdgeLow
+					p.edgeChan <- EdgeLow
 				}
 			} else {
 				return
@@ -102,11 +140,26 @@ func (p *Pin) DetectEdge(edge EdgeType) (chan EdgeType, error) {
 		}
 	}()
 
-	return ch, nil
+	return p.edgeChan, nil
+}
+
+//DetectEdgeStop stop
+func (p *Pin) DetectEdgeStop() error {
+	if p.curMode != pinModeInput {
+		return ErrBadPinMode
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	_, err := p.DetectEdge(EdgeNone)
+
+	return err
 }
 
 //
 func (p *Pin) mode(mode pinMode) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	p.curMode = mode
 	address, operation := p.pi.chip.gpgsel(p.bcmNum, mode)
 	return p.runCommand(address, operation)
@@ -130,53 +183,16 @@ func (p *Pin) memState(address uint64) (int, error) {
 	return p.pi.mmap.get(offset)
 }
 
-/*
-//SetOutput GPSETn (R/W)
-func (p *Pin) SetOutput() error {
-	return nil
-}
+func (p *Pin) detectEdgeStop() (err error) {
+	if p.edgeChan != nil {
+		close(p.edgeChan)
+	}
+	if p.epoll != nil {
+		err = p.epoll.Stop()
+	}
 
-//ClearOutput GPCLRn (R/W)
-func (p *Pin) ClearOutput() error {
-	return nil
+	p.edgeToDetect = EdgeNone
+	p.epoll = nil
+	p.edgeChan = nil
+	return err
 }
-
-//Level GPLEVn (R/W)
-func (p *Pin) Level() (bool, error) {
-	return false, nil
-}
-
-//DetectStatusEvent GPEDSn (R/W)
-func (p *Pin) DetectStatusEvent() error {
-	return nil
-}
-
-//DetectEdgeRising (GPRENn) (R/W)
-func (p *Pin) DetectEdgeRising() error {
-	return nil
-}
-
-//DetectEdgeFalling (GPRENn) (R/W)
-func (p *Pin) DetectEdgeFalling() error {
-	return nil
-}
-
-//HighDetectEnable (GPHENn)
-func (p *Pin) HighDetectEnable() error {
-	return nil
-}
-
-//LowDetectEnable (GPLENn)
-func (p *Pin) LowDetectEnable() error {
-	return nil
-}
-
-//DetectEdgeRisingAsync (GPARENn)
-func (p *Pin) DetectEdgeRisingAsync() error {
-	return nil
-}
-
-//DetectEdgFallingAsync (GPAFENn)
-func (p *Pin) DetectEdgFallingAsync() error {
-	return nil
-}*/

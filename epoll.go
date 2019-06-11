@@ -1,18 +1,21 @@
 package gopherberry
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"log"
 	"os"
 	"syscall"
-
-	"golang.org/x/sync/errgroup"
 )
 
-var (
-	errGraceStop = errors.New("wait grace stop")
+//FilePos to tell read system call where to start reading
+type FilePos int
+
+const (
+	//SeekSet is the beginning of the file; the value is 0.
+	SeekSet FilePos = iota
+	//SeekCur is the current file offset; the value is 1.
+	SeekCur
+	//SeekEnd is the end of the file; the value is 2.
+	SeekEnd
 )
 
 //Epoll entity
@@ -58,92 +61,73 @@ func NewEpoll(fileName string) (*Epoll, error) {
 }
 
 //Wait func
-func (ep *Epoll) Wait(ctx1 context.Context) chan []byte {
+func (ep *Epoll) Wait(pos FilePos) chan []byte {
 
 	c := make(chan []byte)
-	ep.stopChan = make(chan struct{})
 
-	ctx, cancel := context.WithCancel(context.Background())
-	g, ctx := errgroup.WithContext(ctx)
-
-	g.Go(func() error {
-		<-ep.stopChan
-		fmt.Println("return err", errGraceStop)
-		cancel()
-		return errGraceStop
-	})
-	g.Go(func() error {
+	go func() {
 		var buf [1024]byte
 
 		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				//could be blocked and stop will not work properly. (triggered on the next iteration)
-				//@todo try to implement epoll interrupt with signal call
-				num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
-				if num == -1 {
-					log.Println("EpollWait Num -1")
-					continue
-				}
-				// @todo improve handling
-				if err != nil {
-					log.Println("EpollWait err:", err)
-					continue
-				}
-
-				log.Println("EpollWait")
-				//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
-				syscall.Seek(int(ep.event.Fd), 0, 0) //
-				i, err := syscall.Read(int(ep.event.Fd), buf[:])
-				log.Println("EpollWait1")
-				if i == -1 {
-					log.Println("Read Num -1")
-					continue
-				}
-				// @todo improve handling
-				if err != nil {
-					log.Println("Read err:", err)
-					continue
-				}
-
-				//skip initial epoll cycle
-				if ep.firstRun {
-					log.Println("first time skip")
-					ep.firstRun = false
-					continue
-				}
-
-				c <- buf[:]
-				return nil
+			num, err := syscall.EpollWait(ep.epfd, []syscall.EpollEvent{ep.event}, -1)
+			if num == -1 {
+				log.Println("EpollWait Num -1")
+				continue
 			}
+			// @todo improve handling
+			if err != nil {
+				log.Println("EpollWait err:", err)
+				continue
+			}
+
+			//https://support.sas.com/documentation/onlinedoc/sasc/doc750/html/lr1/z2031150.htm
+			seek(int(ep.event.Fd), int(pos), ep.firstRun)
+
+			i, err := syscall.Read(int(ep.event.Fd), buf[:])
+			if i == -1 {
+				log.Println("Read Num -1")
+				continue
+			}
+			// @todo improve handling
+			if err != nil {
+				log.Println("Read err:", err)
+				continue
+			}
+
+			//skip the first epoll cycle for pos types not equal to SeekEnd
+			if ep.firstRun && pos != SeekEnd {
+				ep.firstRun = false
+				continue
+			}
+
+			ep.firstRun = false
+			c <- buf[:]
+
+			return
 		}
-
-	})
-
-	go func(c chan []byte) {
-		err := g.Wait()
-		log.Println("Wait err:", err)
-		close(c)
-	}(c)
+	}()
 
 	return c
 }
 
 //Stop func.
-// Has known issue when stop happens on the next iteration of EpollWait
 func (ep *Epoll) Stop() (err error) {
-	ep.stopChan <- struct{}{}
-	fmt.Println("send stop signal")
-	var x [1024]byte
-	syscall.Seek(int(ep.event.Fd), 0, 1) //
-	n, err := syscall.Read(int(ep.event.Fd), x[:])
-	fmt.Println("1111", n, err)
-	return nil
-	/*err = syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
-	syscall.Close(ep.epfd) //call to trigger error of EpollWait
+	syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
+	syscall.Close(ep.epfd)
 	ep.file.Close()
+	return nil
+}
 
-	return nil*/
+//seek systemcall wrapper
+func seek(fd int, pos int, firstRun bool) {
+
+	if pos == int(SeekEnd) {
+		if !firstRun {
+			return
+		}
+		syscall.Seek(fd, 0, pos)
+		return
+	}
+
+	syscall.Seek(fd, 0, pos)
 }
