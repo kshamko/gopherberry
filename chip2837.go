@@ -107,7 +107,7 @@ func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
 }
 
 //
-func (chip *Chip2837) gpgsel(bcm int, mode pinMode) (registerAddress uint64, operation int) {
+func (chip *Chip2837) gpgsel(bcm int, mode PinMode) (registerAddress uint64, operation int) {
 	//calculate proper register offset
 	addressOffset := bcm / 10 //1 register for 10 pins
 	//calculate operation. all operations are assumed to be 32-bit

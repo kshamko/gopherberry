@@ -13,12 +13,13 @@ type Pin struct {
 	pi     *Raspberry
 	mu     sync.Mutex
 
-	curMode      pinMode
+	curMode      PinMode
 	edgeChan     chan EdgeType
 	edgeToDetect EdgeType
 	epoll        *Epoll
 }
 
+type PinMode int
 type EdgeType string
 
 const (
@@ -28,6 +29,17 @@ const (
 	EdgeNone EdgeType = "none"
 )
 
+const (
+	PinModeInput  PinMode = 0 //000
+	PinModeOutput PinMode = 1 //001
+	//PinModeALT0   PinMode = 4 //100
+	//PinModeALT1   PinMode = 5 //101
+	//PinModeALT2   PinMode = 6 //110
+	//PinModeALT3   PinMode = 7 //111
+	//PinModeALT4   PinMode = 3 //011
+	//PinModeALT5   PinMode = 2 //010
+)
+
 var (
 	//ErrBadPinMode triggered when pin is not in a correct mode to call a function
 	ErrBadPinMode = errors.New("pin is in the wrong mode")
@@ -35,23 +47,23 @@ var (
 
 //ModeInput sets pin to input mode
 func (p *Pin) ModeInput() error {
-	return p.mode(pinModeInput)
+	return p.mode(PinModeInput)
 }
 
 //ModeOutput sets pin to output mode
 func (p *Pin) ModeOutput() error {
-	return p.mode(pinModeOutput)
+	return p.mode(PinModeOutput)
 }
 
 //GetMode func
 //@todo implement
-func (p *Pin) GetMode() pinMode {
+func (p *Pin) GetMode() PinMode {
 	return p.curMode
 }
 
 //SetHigh sets an output to 1
 func (p *Pin) SetHigh() error {
-	if p.curMode != pinModeOutput {
+	if p.curMode != PinModeOutput {
 		return ErrBadPinMode
 	}
 	p.mu.Lock()
@@ -63,7 +75,7 @@ func (p *Pin) SetHigh() error {
 
 //SetLow sets an output to 0
 func (p *Pin) SetLow() error {
-	if p.curMode != pinModeOutput {
+	if p.curMode != PinModeOutput {
 		return ErrBadPinMode
 	}
 	p.mu.Lock()
@@ -75,7 +87,7 @@ func (p *Pin) SetLow() error {
 
 //Level reports pin output state
 func (p *Pin) Level() (bool, error) {
-	if p.curMode != pinModeOutput {
+	if p.curMode != PinModeOutput {
 		return false, ErrBadPinMode
 	}
 	p.mu.Lock()
@@ -96,7 +108,7 @@ func (p *Pin) Level() (bool, error) {
 
 //DetectEdge func
 func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
-	if p.curMode != pinModeInput {
+	if p.curMode != PinModeInput {
 		return nil, ErrBadPinMode
 	}
 	p.mu.Lock()
@@ -145,7 +157,7 @@ func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
 
 //DetectEdgeStop stop
 func (p *Pin) DetectEdgeStop() error {
-	if p.curMode != pinModeInput {
+	if p.curMode != PinModeInput {
 		return ErrBadPinMode
 	}
 	p.mu.Lock()
@@ -156,7 +168,7 @@ func (p *Pin) DetectEdgeStop() error {
 }
 
 //
-func (p *Pin) mode(mode pinMode) error {
+func (p *Pin) mode(mode PinMode) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

@@ -4,26 +4,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type pinMode int
 type chipVersion int
 
 const (
 	//NoBCMNum means that pin has no bcm number (ground, voltage pins)
 	NoBCMNum = -1
-
-	pinModeInput  pinMode = 0 //000
-	pinModeOutput pinMode = 1 //001
-	//pinModeALT0   pinMode = 4 //100
-	//pinModeALT1   pinMode = 5 //101
-	//pinModeALT2   pinMode = 6 //110
-	//pinModeALT3   pinMode = 7 //111
-	//pinModeALT4   pinMode = 3 //011
-	//pinModeALT5   pinMode = 2 //010
-
 	//ARM2837 for corresonding chip type
-	ARM2837 chipVersion = iota
-
-	addressInc = 4
+	ARM2837    chipVersion = iota
+	addressInc             = 4
 )
 
 var (
@@ -50,7 +38,7 @@ type chip interface {
 	getBasePeriphialsAddress() uint64
 	getGPIORegisters() gpioRegisters
 
-	gpgsel(bcm int, mode pinMode) (registerAddress uint64, operation int)
+	gpgsel(bcm int, mode PinMode) (registerAddress uint64, operation int)
 	gpset(bcm int) (registerAddress uint64, operation int)
 	gpclr(bcm int) (registerAddress uint64, operation int)
 	gplev(bcm int) (registerAddress uint64, operation int)

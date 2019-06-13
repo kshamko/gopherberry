@@ -22,9 +22,8 @@ const (
 type Epoll struct {
 	file     *os.File
 	epfd     int
-	event    syscall.EpollEvent
-	stopChan chan struct{}
 	firstRun bool
+	event    syscall.EpollEvent
 }
 
 //NewEpoll func
@@ -111,23 +110,21 @@ func (ep *Epoll) Wait(pos FilePos) chan []byte {
 }
 
 //Stop func.
-func (ep *Epoll) Stop() (err error) {
-	syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
-	syscall.Close(ep.epfd)
-	ep.file.Close()
-	return nil
+func (ep *Epoll) Stop() error {
+	err := syscall.EpollCtl(ep.epfd, syscall.EPOLL_CTL_DEL, int(ep.file.Fd()), &ep.event)
+	_ = syscall.Close(ep.epfd)
+	_ = ep.file.Close()
+	return err
 }
 
 //seek systemcall wrapper
 func seek(fd int, pos int, firstRun bool) {
-
 	if pos == int(SeekEnd) {
 		if !firstRun {
 			return
 		}
-		syscall.Seek(fd, 0, pos)
+		_, _ = syscall.Seek(fd, 0, pos)
 		return
 	}
-
-	syscall.Seek(fd, 0, pos)
+	_, _ = syscall.Seek(fd, 0, pos)
 }
