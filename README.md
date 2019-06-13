@@ -21,7 +21,7 @@ It's important to know that pins have a modes:
 - to detect level on pins please use input mode (i.e. use to detect signals from sensors) 
 - each pin has it's own number of 2 types: *board number* & *bcm number*. [details](https://pinout.xyz/#). **This SDK uses board number to initialise a pin**
   ![Board Vs BCM Num](/docs/pins.png)
-
+- more details about pins could be found [here](https://pinout.xyz/#)
 
 Please refer to the examples for running tips
 
