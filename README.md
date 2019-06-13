@@ -1,6 +1,6 @@
 # Raspberry Pi Programming With Go
 
-Golang SDK for Raspberry Pi programming. **Mmap** <del>(it's not a complete truth)</del> approach was used so it's important to read the spec of BCM chip, which controls Pi. Spec could be found [here](https://github.com/kshamko/gopherberry/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf)
+Golang SDK for Raspberry Pi programming. **Mmap** <del>(it's not a complete truth)</del> approach was used so it's important to read the spec of BCM chip, which controls Pi. Spec could be found [here](/docs/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf)
 
 ## Description
 
