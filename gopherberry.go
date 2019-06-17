@@ -77,6 +77,10 @@ func (r *Raspberry) GetPin(pinNumBoard int) (*Pin, error) {
 	}, nil
 }
 
+/*func (r *Raspberry) Close() {
+	r.mmap.Close()	
+}*/
+
 //
 func (r *Raspberry) initMmap() error {
 

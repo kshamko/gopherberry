@@ -32,12 +32,12 @@ const (
 const (
 	PinModeInput  PinMode = 0 //000
 	PinModeOutput PinMode = 1 //001
-	//PinModeALT0   PinMode = 4 //100
+	PinModeALT0   PinMode = 4 //100
 	//PinModeALT1   PinMode = 5 //101
 	//PinModeALT2   PinMode = 6 //110
 	//PinModeALT3   PinMode = 7 //111
 	//PinModeALT4   PinMode = 3 //011
-	//PinModeALT5   PinMode = 2 //010
+	PinModeALT5   PinMode = 2 //010
 )
 
 var (

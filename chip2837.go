@@ -11,6 +11,7 @@ type Chip2837 struct {
 	board2BCM map[int]int
 	//GPIORegisters maps function to registers
 	gpioRegisters gpioRegisters
+	pwm0,pwm1 map[int]PinMode
 }
 
 //NewChip2837 func
@@ -68,11 +69,11 @@ func newChip2837() chip {
 			40: 21,       //SCLK
 		},
 		gpioRegisters: map[string][]uint64{
-			"GPFSEL":   {0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014}, //rw
-			"GPSET":    {0x7E20001C, 0x7E200020},                                                 // w
-			"GPCLR":    {0x7E200028, 0x7E20002C},                                                 // w
-			"GPLEV":    {0x7E200034, 0x7E200038},                                                 // r
-			"GPEDS":    {0x7E200040, 0x7E200044},                                                 // rw
+			"GPFSEL":   {0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014}, //select pin mode
+			"GPSET":    {0x7E20001C, 0x7E200020},                                                 //set pin high
+			"GPCLR":    {0x7E200028, 0x7E20002C},                                                 //set pin low
+			"GPLEV":    {0x7E200034, 0x7E200038},                                                 //get pin level
+			"GPEDS":    {0x7E200040, 0x7E200044},                                                 //rw
 			"GPREN":    {0x7E20004C, 0x7E200050},                                                 //rw
 			"GPFEN":    {0x7E200058, 0x7E20005C},                                                 //rw
 			"GPHEN":    {0x7E200064, 0x7E200068},                                                 //rw
@@ -81,6 +82,17 @@ func newChip2837() chip {
 			"GPAFEN":   {0x7E200088, 0x7E20008C},                                                 //rw
 			"GPPUD":    {0x7E200094},                                                             //rw
 			"GPPUDCLK": {0x7E200098, 0x7E20009C},                                                 //rw
+		},
+		pwm0: map[int]PinMode{ //map[bcmNum]PinMode
+			12: PinModeALT0,
+			18: PinModeALT5,
+			40: PinModeALT0,
+		},
+		pwm1: map[int]PinMode {
+			13: PinModeALT0,
+			19: PinModeALT5,
+			41: PinModeALT0,
+			45: PinModeALT0,
 		},
 	}
 
