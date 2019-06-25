@@ -42,6 +42,8 @@ type chip interface {
 	gpset(bcm int) (registerAddress uint64, operation int)
 	gpclr(bcm int) (registerAddress uint64, operation int)
 	gplev(bcm int) (registerAddress uint64, operation int)
+
+	pwmAltFunc(bcm int) (alt PinMode, pwmChanNum int, err error)
 }
 
 //New func
@@ -78,7 +80,7 @@ func (r *Raspberry) GetPin(pinNumBoard int) (*Pin, error) {
 }
 
 /*func (r *Raspberry) Close() {
-	r.mmap.Close()	
+	r.mmap.Close()
 }*/
 
 //

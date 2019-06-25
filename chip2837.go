@@ -1,5 +1,7 @@
 package gopherberry
 
+import "github.com/pkg/errors"
+
 //Chip2837 implementation for raspberry 3+
 type Chip2837 struct {
 	periphialsBaseAddrPhys uint64
@@ -11,7 +13,7 @@ type Chip2837 struct {
 	board2BCM map[int]int
 	//GPIORegisters maps function to registers
 	gpioRegisters gpioRegisters
-	pwm0,pwm1 map[int]PinMode
+	pwm0, pwm1    map[int]PinMode
 }
 
 //NewChip2837 func
@@ -88,7 +90,7 @@ func newChip2837() chip {
 			18: PinModeALT5,
 			40: PinModeALT0,
 		},
-		pwm1: map[int]PinMode {
+		pwm1: map[int]PinMode{
 			13: PinModeALT0,
 			19: PinModeALT5,
 			41: PinModeALT0,
@@ -141,6 +143,22 @@ func (chip *Chip2837) gpclr(bcm int) (registerAddress uint64, operation int) {
 //
 func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, operation int) {
 	return chip.twoBankCommand(bcm, "GPLEV")
+}
+
+//
+func (chip *Chip2837) pwmAltFunc(bcm int) (alt PinMode, pwmChanNum int, err error) {
+
+	alt, ok := chip.pwm0[bcm]
+	if ok {
+		return alt, 0, nil
+	}
+
+	alt, ok = chip.pwm1[bcm]
+	if ok {
+		return alt, 1, nil
+	}
+
+	return alt, pwmChanNum, errors.New("alt not found")
 }
 
 func (chip *Chip2837) twoBankCommand(bcm int, commandName string) (registerAddress uint64, operation int) {

@@ -2,8 +2,6 @@ package gopherberry
 
 import (
 	"errors"
-	"fmt"
-	"os/exec"
 	"sync"
 )
 
@@ -37,7 +35,7 @@ const (
 	//PinModeALT2   PinMode = 6 //110
 	//PinModeALT3   PinMode = 7 //111
 	//PinModeALT4   PinMode = 3 //011
-	PinModeALT5   PinMode = 2 //010
+	PinModeALT5 PinMode = 2 //010
 )
 
 var (
@@ -45,126 +43,10 @@ var (
 	ErrBadPinMode = errors.New("pin is in the wrong mode")
 )
 
-//ModeInput sets pin to input mode
-func (p *Pin) ModeInput() error {
-	return p.mode(PinModeInput)
-}
-
-//ModeOutput sets pin to output mode
-func (p *Pin) ModeOutput() error {
-	return p.mode(PinModeOutput)
-}
-
 //GetMode func
 //@todo implement
 func (p *Pin) GetMode() PinMode {
 	return p.curMode
-}
-
-//SetHigh sets an output to 1
-func (p *Pin) SetHigh() error {
-	if p.curMode != PinModeOutput {
-		return ErrBadPinMode
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	address, operation := p.pi.chip.gpset(p.bcmNum)
-	return p.runCommand(address, operation)
-}
-
-//SetLow sets an output to 0
-func (p *Pin) SetLow() error {
-	if p.curMode != PinModeOutput {
-		return ErrBadPinMode
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	address, operation := p.pi.chip.gpclr(p.bcmNum)
-	return p.runCommand(address, operation)
-}
-
-//Level reports pin output state
-func (p *Pin) Level() (bool, error) {
-	if p.curMode != PinModeOutput {
-		return false, ErrBadPinMode
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	address, operation := p.pi.chip.gplev(p.bcmNum)
-	state, err := p.memState(address)
-	if err != nil {
-		return false, err
-	}
-
-	if state&operation == 0 {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-//DetectEdge func
-func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
-	if p.curMode != PinModeInput {
-		return nil, ErrBadPinMode
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	command := fmt.Sprintf("gpio edge %d %s", p.bcmNum, edge)
-	_, err := exec.Command("/bin/bash", "-c", command).Output()
-	if err != nil {
-		return nil, err
-	}
-
-	if edge == EdgeNone {
-		return nil, p.detectEdgeStop()
-	}
-
-	fileName := fmt.Sprintf("/sys/class/gpio/gpio%d/value", p.bcmNum)
-	ep, err := NewEpoll(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	p.epoll = ep
-	p.edgeChan = make(chan EdgeType)
-
-	go func() {
-		for {
-			c := ep.Wait(SeekSet)
-			data, ok := <-c
-			if ok {
-
-				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
-					p.edgeChan <- EdgeHigh
-				}
-
-				if data[0] == 48 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
-					p.edgeChan <- EdgeLow
-				}
-			} else {
-				return
-			}
-		}
-	}()
-
-	return p.edgeChan, nil
-}
-
-//DetectEdgeStop stop
-func (p *Pin) DetectEdgeStop() error {
-	if p.curMode != PinModeInput {
-		return ErrBadPinMode
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	_, err := p.DetectEdge(EdgeNone)
-
-	return err
 }
 
 //
