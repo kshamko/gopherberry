@@ -1,0 +1,198 @@
+
+1. Raspberry 
+- ARM process
+- BCN chip
+
+2. CPU Overview
+https://www.macs.hw.ac.uk/~hwloidl/Courses/F28HS/slides_RPi_arch.pdf (take pick)
+Memory management unit
+- how works?
+
+3. BCM Overview
+find pick with MMU
+- also has a MMU
+- the second MMU is a "system MMU" (SMMU). Google for "ARM system MMU"
+
+4. Why do we need 2?
+- thats why (show pick from spec with 2 mmu)
+- ARMS's mmu maps virtual addr to physical
+- system MMU maps physical into bus addr
+- 2 MMUs allows to make a DMA to periphials 
+- how MMU knows how to map?
+
+5. periphials
+- External devices connected to a CPU
+- CPU communicates with a device with IO operations. 
+- The most common form of IO is so called memory mapped IO where registers on the device are mapped into memory. This means that to communicate with the device, you need simply read or write to a specific address in memory.
+- Communication via bus
+
+5. virtual vs physical vs bus addr?
+- kernel mode mem
+- user mode 
+- bus address?
+
+6. Bus?
+
+- what is bus (address bus, data bus)
+- address bus set of wires 
+- cpu writes into addr & data simult (mov a b)
+- image with chip select (kostya told)
+
+
+6. GPIO & DMA. 
+
+
+7. Memory mapped registers
+
+8. /dev/* files
+
+* GPIO
+
+* Overview
+- 54 general-purpose I\O (GPIO) lines split into 2 banks
+- All GPIO pins have at least two alternative (input/output)
+- The GPIO has 41 registers. All accesses are assumed to be 32-bit
+.image img/GPIO_pins_v2.png _ 400
+
+* GPIO Modes
+- input - possible to detect pin state 
+- output - set pin level to 1
+- alt functions (up to 6)
+- could be set by GPFSELn function
+
+* GPIO Set Mode
+To set *ALT3* mode for pin19 we need:
+1. Generate a command which will be: *00* *111* *000* *000* *000* *000* *000* *000* *000* *000* *000*
+2. Take bus address of *0x7E200004* and calculate physical address which is *0x3F200004*
+3. Write command to memory cell with calculated physical address
+.image img/gpsel.png _ 500
+.image img/fsel.png  _ 500
+
+* Golang Implementation
+
+* MMAP System Call
+- system call - the programmatic way in which a computer program requests a service from the kernel of the operating system it is executed on. System calls are generally not invoked directly, but rather via wrapper functions in glibc
+- mmap() call - map files or devices into memory. Creates a new mapping in the virtual address space of the calling process
+- syscall.Mmap(fd int, offset int64, length int, prot int, flags int) (data []byte, err error)
+- */dev/mem* is a character device file that is an image of the main memory of the computer. Byte addresses in /dev/mem are interpreted as physical memory addresses.
+
+* Code Sample: Load mmap file
+.code code/sample.go /^func loadMmaped/,/^}/
+
+* Code Sample: Make a command
+.code code/sample.go /^func toPointer/,/^}/
+
+.code code/sample.go /^func writeCommand/,/^}/
+
+
+
+
+
+
+
+
+
+
+RaspberryPi's GPIO Programming with Go
+
+Kanstantsin Shamko
+Erlang developer at [[https://www.idt.net/][IDT]]
+
+* Agenda 
+- What is RaspberryPi
+- BCM chip & peripherals, GPIO
+- Memory management & CPU
+- System calls, mmap
+- How to use it with Golang
+
+* What is Raspberry Pi
+
+* Overview
+- small single-board computer
+- works under control of BCM2837 chip
+.image img/rsp.png _ 500
+
+* BCM2837
+- System-on-a-chip (SoC)
+- Includes:
+1. CPU (1.2GHz 64bit 4-cores ARMv8 Cortex-A53)
+2. GPU (1080p)
+3. MMU (memory management unit)
+4. ...
+
+* BCM2837 Peripherals
+- Timers
+- Interrupt controller
+- USB
+- ...
+- GPIO
+
+* Peripherals In General
+- External devices connected to a CPU
+- CPU communicates with a device with IO operations. 
+- The most common form of IO is so called memory mapped IO where registers on the device are mapped into memory. This means that to communicate with the device, you need simply read or write to a specific address in memory.
+- Communication via bus
+.image img/system_bus.png _ 400
+
+* ARM CPU
+- follows a RISC architecture (Reduced Instruction Set Computer)
+- ISA is relatively simple and most instructions execute in one clock cycle
+- follows the the explicit load-and-store model, meaning any operation between two data objects in memory require explicitly loading the data from memory to processor registers, performing the operation and explicitly storing the data back into memory
+
+* Memory Address Management in RSP
+- peripherals have bus address 
+- bus address mapped to virtual address by BCM MMU. Virtual address issued by ARM 
+.image img/rsp_linux_kernel.png
+- virtual addressed mapped to physical addresses by ARM MMU
+
+* BCM2837 Spec 
+- The peripheral addresses specified in the documentation are bus addresses. Software directly accessing peripherals must translate these addresses into physical or virtual addresses.
+- Peripherals (at physical address 0x3F000000 on) are mapped into the kernel virtual address space starting at address 0xF2000000
+- The bus addresses for peripherals are set up to map onto the peripheral bus address range starting at 0x7E000000.
+
+* GPIO
+
+* Overview
+- 54 general-purpose I\O (GPIO) lines split into 2 banks
+- All GPIO pins have at least two alternative (input/output)
+- The GPIO has 41 registers. All accesses are assumed to be 32-bit
+.image img/GPIO_pins_v2.png _ 400
+
+* GPIO Modes
+- input - possible to detect pin state 
+- output - set pin level to 1
+- alt functions (up to 6)
+- could be set by GPFSELn function
+
+* GPIO Set Mode
+To set *ALT3* mode for pin19 we need:
+1. Generate a command which will be: *00* *111* *000* *000* *000* *000* *000* *000* *000* *000* *000*
+2. Take bus address of *0x7E200004* and calculate physical address which is *0x3F200004*
+3. Write command to memory cell with calculated physical address
+.image img/gpsel.png _ 500
+.image img/fsel.png  _ 500
+
+* Golang Implementation
+
+* MMAP System Call
+- system call - the programmatic way in which a computer program requests a service from the kernel of the operating system it is executed on. System calls are generally not invoked directly, but rather via wrapper functions in glibc
+- mmap() call - map files or devices into memory. Creates a new mapping in the virtual address space of the calling process
+- syscall.Mmap(fd int, offset int64, length int, prot int, flags int) (data []byte, err error)
+- */dev/mem* is a character device file that is an image of the main memory of the computer. Byte addresses in /dev/mem are interpreted as physical memory addresses.
+
+* Code Sample: Load mmap file
+.code code/sample.go /^func loadMmaped/,/^}/
+
+* Code Sample: Make a command
+.code code/sample.go /^func toPointer/,/^}/
+
+.code code/sample.go /^func writeCommand/,/^}/
+
+* Links
+- https://elinux.org/RPi_Hardware
+- http://man7.org/linux/man-pages/man2/syscalls.2.html
+- http://man7.org/linux/man-pages/man2/mmap.2.html
+- http://man7.org/linux/man-pages/man4/mem.4.html
+- https://blog.gopheracademy.com/advent-2017/unsafe-pointer-and-system-calls/
+- http://www.linux-databook.info/?page_id=5108
+- https://github.com/kshamko/gopherberry
