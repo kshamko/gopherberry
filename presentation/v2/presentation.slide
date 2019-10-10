@@ -35,6 +35,7 @@ Erlang developer at [[https://www.idt.net/][IDT]]
 - CPU communicates with a device with IO operations. 
 - The most common form of IO is so called memory mapped IO
 - Communication via bus
+.image img/system_bus.png _ 400
 
 * Why Do We  Need 2 MMUs?
 .image img/mem_mmu.png 
@@ -48,20 +49,28 @@ Points to the actual physical location in memory
 - way how OS could hide resources of one process from another
 
 * Bus Address
-.image img/system_bus.png _ 400
 - is for address bus
 - wires connecting CPU, periphials, memory
 - level on these wires could be interpreted as an address
 
 * Example
-- вращаем мотор
+- turn on a motor
 - mov #f2 1
 - ARM MMU #f2 -> #e2
 - mov #e2 1
 - BCM MMU #e2 -> #01
 - mov #01 1
-- bus wire 0: 0, bus wure 1: 1
+- bus wire 0: 0, bus wire 1: 1
 - data bus: 1
+
+* Example (continue)
+.image img/example.png _ 500
+
+* BCM2837 Spec. Some Rules
+- The peripheral addresses specified in the documentation are bus addresses
+- Addres mapping rules: bus 0x7Ennnnnn -> virt (kernel space) 0xF2nnnnnn -> phys 0x3Fnnnnnn
+- The bus addresses for peripherals are starting at 0x7E000000.
+- In your app use physical or virtual addresses
 
 * GPIO
 
@@ -70,11 +79,6 @@ Points to the actual physical location in memory
 - All GPIO pins have at least two alternative (input/output)
 - The GPIO has 41 registers. All accesses are assumed to be 32-bit
 .image img/GPIO_pins_v2.png _ 400
-
-* BCM2837 Spec 
-- The peripheral addresses specified in the documentation are bus addresses. Software directly accessing peripherals must translate these addresses into physical or virtual addresses.
-- Peripherals (at physical address 0x3F000000 on) are mapped into the kernel virtual address space starting at address 0xF2000000
-- The bus addresses for peripherals are set up to map onto the peripheral bus address range starting at 0x7E000000.
 
 * GPIO Modes
 - input - possible to detect pin state 
