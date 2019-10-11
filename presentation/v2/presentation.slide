@@ -11,11 +11,32 @@ Erlang developer at [[https://www.idt.net/][IDT]]
 - How to use it with Golang
 
 * What is Raspberry Pi
-
-* Overview
 - small single-board computer
-- works under control of BCM2837 chip
 .image img/rsp.png _ 500
+
+* Why It's Awesome
+.image img/GPIO_pins_v2.png _ 400
+- GPIO is a peripheral
+
+* Periphials:
+- External devices connected to a CPU
+- CPU communicates with a device with IO operations. 
+- The most common form of IO is so called memory mapped IO
+- Communication via bus
+.image img/system_bus.png _ 400
+
+* Example
+- turn on a motor
+- mov #f2 1
+  ....
+- mov #01 1
+- bus wire 0: 0, bus wire 1: 1
+- data bus: 1
+
+* Example (continue)
+.image img/example.png _ 500
+
+* Memory Management
 
 * BCM2837
 - System-on-a-chip (SoC)
@@ -27,15 +48,6 @@ Erlang developer at [[https://www.idt.net/][IDT]]
 
 * ARM CPU Onboard
 .image img/arm.png _ 500
-
-* Memory Management
-
-* Periphials
-- External devices connected to a CPU
-- CPU communicates with a device with IO operations. 
-- The most common form of IO is so called memory mapped IO
-- Communication via bus
-.image img/system_bus.png _ 400
 
 * Why Do We  Need 2 MMUs?
 .image img/mem_mmu.png 
@@ -53,7 +65,7 @@ Points to the actual physical location in memory
 - wires connecting CPU, periphials, memory
 - level on these wires could be interpreted as an address
 
-* Example
+* Example (extended)
 - turn on a motor
 - mov #f2 1
 - ARM MMU #f2 -> #e2
@@ -62,9 +74,6 @@ Points to the actual physical location in memory
 - mov #01 1
 - bus wire 0: 0, bus wire 1: 1
 - data bus: 1
-
-* Example (continue)
-.image img/example.png _ 500
 
 * BCM2837 Spec. Some Rules
 - The peripheral addresses specified in the documentation are bus addresses
@@ -93,6 +102,7 @@ To set *ALT3* mode for pin19 we need:
 3. Write command to memory cell with calculated physical address
 .image img/gpsel.png _ 500
 .image img/fsel.png  _ 500
+
 
 * Golang Implementation
 
