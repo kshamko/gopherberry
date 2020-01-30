@@ -77,7 +77,11 @@ type chip interface {
 	gpclr(bcm int) (registerAddress uint64, operation int)
 	gplev(bcm int) (registerAddress uint64, operation int)
 
+<<<<<<< HEAD
 	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int)
+=======
+	pwmAltFunc(bcm int) (alt PinMode, pwmChanNum int, err error)
+>>>>>>> 73d75e7cced37c7de088a06c15bda7037fe81722
 }
 
 //New func

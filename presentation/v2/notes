@@ -1,0 +1,13 @@
+notes
+
+The most common form of IO is so called memory mapped IO where registers on the device are mapped into memory. This means that to communicate with the device, you need simply read or write to a specific address in memory.
+
+MMU - os kernel controls it? жесткая логика?
+
+Virtual addresses also benefit software developers, who will not know a system's exact memory addresses when writing their application. With virtual addresses, software developers do not need to concern themselves with the physical memory. The application knows that it is up to the OS and the hardware to work together to perform the address translation. 
+
+https://developer.arm.com/architectures/learn-the-architecture/memory-management/virtual-and-physical-addresses
+
+The width of the address bus (that is, the number of wires) determines how many unique memory locations can be addressed
+
+Direct memory access (DMA) is a feature of computer systems that allows certain hardware subsystems to access main system memory (random-access memory), independent of the central processing unit (CPU).
