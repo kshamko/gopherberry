@@ -4,14 +4,15 @@ package gopherberry
 type Chip2837 struct {
 	periphialsBaseAddrPhys uint64
 	//periphialsBaseAddrVirt uint64
-	//periphialsBaseAddrBus  uint64
+	periphialsBaseAddrBus uint64
 
 	//Board2BCM maps board pin number to "Broadcom SOC channel" number
 	//nolint https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
 	board2BCM map[int]int
 	//GPIORegisters maps function to registers
 	gpioRegisters gpioRegisters
-	pwm0,pwm1 map[int]PinMode
+	pwm0, pwm1    map[int]PinMode
+	pwmRegisters  pwmRegisters
 }
 
 //NewChip2837 func
@@ -25,7 +26,7 @@ func newChip2837() chip {
 		periphialsBaseAddrPhys: 0x3F000000,
 		// We need to map this physical memory into the program's virtual addressing scheme so that the program can access it.
 		//periphialsBaseAddrVirt: 0xF2000000,
-		//periphialsBaseAddrBus:  0x7E000000,
+		periphialsBaseAddrBus: 0x7E000000,
 		board2BCM: map[int]int{
 			1:  NoBCMNum, //3v3 power
 			2:  NoBCMNum, //5v power
@@ -87,12 +88,24 @@ func newChip2837() chip {
 			12: PinModeALT0,
 			18: PinModeALT5,
 			40: PinModeALT0,
+			52: PinModeALT1,
 		},
-		pwm1: map[int]PinMode {
+		pwm1: map[int]PinMode{
 			13: PinModeALT0,
 			19: PinModeALT5,
 			41: PinModeALT0,
 			45: PinModeALT0,
+			53: PinModeALT1,
+		},
+		pwmRegisters: map[string]uint64{
+			"CTL":  0x7E20C000,
+			"STA":  0x7E20C004,
+			"DMAC": 0x7E20C008,
+			"RNG1": 0x7E20C010,
+			"DAT1": 0x7E20C014,
+			"FIF1": 0x7E20C018,
+			"RNG2": 0x7E20C020,
+			"DAT2": 0x7E20C024,
 		},
 	}
 
@@ -100,13 +113,22 @@ func newChip2837() chip {
 }
 
 //
-func (chip *Chip2837) getBasePeriphialsAddress() uint64 {
+func (chip *Chip2837) getBasePeriphialsAddressPhys() uint64 {
 	return chip.periphialsBaseAddrPhys
+}
+
+//
+func (chip *Chip2837) getBasePeriphialsAddressBus() uint64 {
+	return chip.periphialsBaseAddrBus
 }
 
 //
 func (chip *Chip2837) getGPIORegisters() gpioRegisters {
 	return chip.gpioRegisters
+}
+
+func (chip *Chip2837) getPWMRegisters() pwmRegisters {
+	return chip.pwmRegisters
 }
 
 func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
@@ -116,6 +138,19 @@ func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
 	}
 
 	return NoBCMNum
+}
+
+func (chip *Chip2837) getPinModePWM(pinNumBCM int) (error, PinMode) {
+
+	if val, ok := chip.pwm0[pinNumBCM]; ok {
+		return nil, val
+	}
+
+	if val, ok := chip.pwm1[pinNumBCM]; ok {
+		return nil, val
+	}
+
+	return ErrNoPWM, PinModeNA
 }
 
 //
@@ -141,6 +176,14 @@ func (chip *Chip2837) gpclr(bcm int) (registerAddress uint64, operation int) {
 //
 func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, operation int) {
 	return chip.twoBankCommand(bcm, "GPLEV")
+}
+
+func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int) {
+	operation = cfg2.MSEnable<<15 + cfg2.UseFIF0<<13 + cfg2.Polarity<<12 + cfg2.SilenceBit<<11
+	operation += cfg2.RepeatLast<<10 + cfg2.Mode<<9 + cfg2.ChanEnabled<<8
+	operation += cfg1.MSEnable<<7 + cfg1.UseFIF0<<5 + cfg1.Polarity<<4 + cfg1.SilenceBit<<3
+	operation += cfg1.RepeatLast<<2 + cfg1.Mode<<1 + cfg1.ChanEnabled
+	return chip.pwmRegisters["CTL"], operation
 }
 
 func (chip *Chip2837) twoBankCommand(bcm int, commandName string) (registerAddress uint64, operation int) {

@@ -27,17 +27,21 @@ const (
 	EdgeLow  EdgeType = "falling"
 	EdgeBoth EdgeType = "both"
 	EdgeNone EdgeType = "none"
+
+	ASCII0 = 48
+	ASCII1 = 49
 )
 
 const (
 	PinModeInput  PinMode = 0 //000
 	PinModeOutput PinMode = 1 //001
 	PinModeALT0   PinMode = 4 //100
-	//PinModeALT1   PinMode = 5 //101
+	PinModeALT1   PinMode = 5 //101
 	//PinModeALT2   PinMode = 6 //110
 	//PinModeALT3   PinMode = 7 //111
 	//PinModeALT4   PinMode = 3 //011
-	PinModeALT5   PinMode = 2 //010
+	PinModeALT5 PinMode = 2 //010
+	PinModeNA   PinMode = -1
 )
 
 var (
@@ -55,6 +59,19 @@ func (p *Pin) ModeOutput() error {
 	return p.mode(PinModeOutput)
 }
 
+//ModePWM set pin to PWM mode
+func (p *Pin) ModePWM() error {
+	if !p.pi.pwmRunning {
+		return ErrPWMStart
+	}
+
+	err, mode := p.pi.chip.getPinModePWM(p.bcmNum)
+	if err != nil {
+		return err
+	}
+	return p.mode(mode)
+}
+
 //GetMode func
 //@todo implement
 func (p *Pin) GetMode() PinMode {
@@ -70,7 +87,7 @@ func (p *Pin) SetHigh() error {
 	defer p.mu.Unlock()
 
 	address, operation := p.pi.chip.gpset(p.bcmNum)
-	return p.runCommand(address, operation)
+	return p.pi.runMmapCommand(address, operation)
 }
 
 //SetLow sets an output to 0
@@ -82,7 +99,7 @@ func (p *Pin) SetLow() error {
 	defer p.mu.Unlock()
 
 	address, operation := p.pi.chip.gpclr(p.bcmNum)
-	return p.runCommand(address, operation)
+	return p.pi.runMmapCommand(address, operation)
 }
 
 //Level reports pin output state
@@ -139,11 +156,11 @@ func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
 			data, ok := <-c
 			if ok {
 
-				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
+				if data[0] == ASCII1 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
 					p.edgeChan <- EdgeHigh
 				}
 
-				if data[0] == 48 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
+				if data[0] == ASCII0 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
 					p.edgeChan <- EdgeLow
 				}
 			} else {
@@ -174,17 +191,17 @@ func (p *Pin) mode(mode PinMode) error {
 
 	p.curMode = mode
 	address, operation := p.pi.chip.gpgsel(p.bcmNum, mode)
-	return p.runCommand(address, operation)
+	return p.pi.runMmapCommand(address, operation)
 }
 
 //
-func (p *Pin) runCommand(address uint64, operation int) error {
+/*func (p *Pin) runCommand(address uint64, operation int) error {
 	offset, ok := p.pi.memOffsets[address]
 	if !ok {
 		return ErrNoOffset
 	}
 	return p.pi.mmap.run(offset, operation)
-}
+}*/
 
 //
 func (p *Pin) memState(address uint64) (int, error) {
