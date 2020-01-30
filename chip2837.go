@@ -1,7 +1,5 @@
 package gopherberry
 
-import "github.com/pkg/errors"
-
 //Chip2837 implementation for raspberry 3+
 type Chip2837 struct {
 	periphialsBaseAddrPhys uint64
@@ -14,10 +12,7 @@ type Chip2837 struct {
 	//GPIORegisters maps function to registers
 	gpioRegisters gpioRegisters
 	pwm0, pwm1    map[int]PinMode
-<<<<<<< HEAD
 	pwmRegisters  pwmRegisters
-=======
->>>>>>> 73d75e7cced37c7de088a06c15bda7037fe81722
 }
 
 //NewChip2837 func
@@ -183,29 +178,12 @@ func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, operation int) {
 	return chip.twoBankCommand(bcm, "GPLEV")
 }
 
-<<<<<<< HEAD
 func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int) {
 	operation = cfg2.MSEnable<<15 + cfg2.UseFIF0<<13 + cfg2.Polarity<<12 + cfg2.SilenceBit<<11
 	operation += cfg2.RepeatLast<<10 + cfg2.Mode<<9 + cfg2.ChanEnabled<<8
 	operation += cfg1.MSEnable<<7 + cfg1.UseFIF0<<5 + cfg1.Polarity<<4 + cfg1.SilenceBit<<3
 	operation += cfg1.RepeatLast<<2 + cfg1.Mode<<1 + cfg1.ChanEnabled
 	return chip.pwmRegisters["CTL"], operation
-=======
-//
-func (chip *Chip2837) pwmAltFunc(bcm int) (alt PinMode, pwmChanNum int, err error) {
-
-	alt, ok := chip.pwm0[bcm]
-	if ok {
-		return alt, 0, nil
-	}
-
-	alt, ok = chip.pwm1[bcm]
-	if ok {
-		return alt, 1, nil
-	}
-
-	return alt, pwmChanNum, errors.New("alt not found")
->>>>>>> 73d75e7cced37c7de088a06c15bda7037fe81722
 }
 
 func (chip *Chip2837) twoBankCommand(bcm int, commandName string) (registerAddress uint64, operation int) {

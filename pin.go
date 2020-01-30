@@ -2,6 +2,8 @@ package gopherberry
 
 import (
 	"errors"
+	"fmt"
+	"os/exec"
 	"sync"
 )
 
@@ -39,10 +41,8 @@ const (
 	//PinModeALT3   PinMode = 7 //111
 	//PinModeALT4   PinMode = 3 //011
 	PinModeALT5 PinMode = 2 //010
-<<<<<<< HEAD
-	PinModeNA   PinMode = -1
-=======
->>>>>>> 73d75e7cced37c7de088a06c15bda7037fe81722
+
+	PinModeNA PinMode = -1
 )
 
 var (
@@ -50,7 +50,6 @@ var (
 	ErrBadPinMode = errors.New("pin is in the wrong mode")
 )
 
-<<<<<<< HEAD
 //ModeInput sets pin to input mode
 func (p *Pin) ModeInput() error {
 	return p.mode(PinModeInput)
@@ -74,15 +73,12 @@ func (p *Pin) ModePWM() error {
 	return p.mode(mode)
 }
 
-=======
->>>>>>> 73d75e7cced37c7de088a06c15bda7037fe81722
 //GetMode func
 //@todo implement
 func (p *Pin) GetMode() PinMode {
 	return p.curMode
 }
 
-<<<<<<< HEAD
 //SetHigh sets an output to 1
 func (p *Pin) SetHigh() error {
 	if p.curMode != PinModeOutput {
@@ -189,8 +185,6 @@ func (p *Pin) DetectEdgeStop() error {
 	return err
 }
 
-=======
->>>>>>> 73d75e7cced37c7de088a06c15bda7037fe81722
 //
 func (p *Pin) mode(mode PinMode) error {
 	p.mu.Lock()
