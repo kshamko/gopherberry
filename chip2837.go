@@ -112,6 +112,10 @@ func newChip2837() chip {
 	return chip
 }
 
+func (chip *Chip2837) addrBus2Phys(addr uint64) uint64 {
+	return addr - chip.periphialsBaseAddrBus + chip.periphialsBaseAddrPhys
+}
+
 //
 func (chip *Chip2837) getBasePeriphialsAddressPhys() uint64 {
 	return chip.periphialsBaseAddrPhys

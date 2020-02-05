@@ -37,6 +37,9 @@ type pwmRegisters map[string]uint64
 //PWMChannelConfig struct represents configuration of a PWM channel
 //Pi has 2 PWM channels
 //https://github.com/RichardChambers/raspberrypi/wiki/Notes-on:-Pulse-Width-Modulation-(PWM)---Discussion
+//https://knowledge.ni.com/KnowledgeArticleDetails?id=kA00Z0000019OkFSAU - duty cycle descr
+//https://electronics.stackexchange.com/questions/242293/is-there-an-ideal-pwm-frequency-for-dc-brush-motors - pwm freq
+// https://www.precisionmicrodrives.com/content/ab-022-pwm-frequency-for-linear-motion-control/ - pwm freq
 //
 type PWMChannelConfig struct {
 	//0 - balanced mode (pulse-density)
@@ -67,10 +70,11 @@ type Raspberry struct {
 type chip interface {
 	getPinBCM(pinNumBoard int) int
 	getBasePeriphialsAddressPhys() uint64
-	getBasePeriphialsAddressBus() uint64
+	//getBasePeriphialsAddressBus() uint64
 	getGPIORegisters() gpioRegisters
 	getPWMRegisters() pwmRegisters
 	getPinModePWM(pinNumBCM int) (error, PinMode)
+	addrBus2Phys(uint64) uint64
 
 	gpgsel(bcm int, mode PinMode) (registerAddress uint64, operation int)
 	gpset(bcm int) (registerAddress uint64, operation int)
@@ -78,6 +82,7 @@ type chip interface {
 	gplev(bcm int) (registerAddress uint64, operation int)
 
 	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int)
+	//pwmRng() (registerAddress uint64, operation int)
 }
 
 //New func
@@ -156,8 +161,8 @@ func (r *Raspberry) runMmapCommand(busAddress uint64, operation int) error {
 		return ErrNoOffset
 	}*/
 	//base := r.chip.getBasePeriphialsAddressPhys() & 0xff000000
-
-	offset := int(busAddress - r.chip.getBasePeriphialsAddressBus())
+	physAddr := r.chip.addrBus2Phys(busAddress)
+	offset := int(physAddr - r.chip.getBasePeriphialsAddressPhys())
 	return r.mmap.run(offset, operation)
 }
 

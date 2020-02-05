@@ -5,7 +5,6 @@ func (p *Pin) ModeOutput() error {
 	return p.mode(PinModeOutput)
 }
 
-
 //SetHigh sets an output to 1
 func (p *Pin) SetHigh() error {
 	if p.curMode != PinModeOutput {
@@ -15,7 +14,7 @@ func (p *Pin) SetHigh() error {
 	defer p.mu.Unlock()
 
 	address, operation := p.pi.chip.gpset(p.bcmNum)
-	return p.runCommand(address, operation)
+	return p.pi.runMmapCommand(address, operation)
 }
 
 //SetLow sets an output to 0
@@ -27,7 +26,7 @@ func (p *Pin) SetLow() error {
 	defer p.mu.Unlock()
 
 	address, operation := p.pi.chip.gpclr(p.bcmNum)
-	return p.runCommand(address, operation)
+	return p.pi.runMmapCommand(address, operation)
 }
 
 //Level reports pin output state

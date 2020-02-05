@@ -5,6 +5,16 @@ import (
 	"os/exec"
 )
 
+const (
+	ASCII0 = 48
+	ASCII1 = 49
+
+	EdgeHigh EdgeType = "rising"
+	EdgeLow  EdgeType = "falling"
+	EdgeBoth EdgeType = "both"
+	EdgeNone EdgeType = "none"
+)
+
 //ModeInput sets pin to input mode
 func (p *Pin) ModeInput() error {
 	return p.mode(PinModeInput)
@@ -43,11 +53,11 @@ func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
 			data, ok := <-c
 			if ok {
 
-				if data[0] == 49 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
+				if data[0] == ASCII1 && (edge == EdgeBoth || edge == EdgeHigh) { //check 1
 					p.edgeChan <- EdgeHigh
 				}
 
-				if data[0] == 48 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
+				if data[0] == ASCII0 && (edge == EdgeBoth || edge == EdgeLow) { //check 0
 					p.edgeChan <- EdgeLow
 				}
 			} else {
@@ -60,7 +70,7 @@ func (p *Pin) DetectEdge(edge EdgeType) (<-chan EdgeType, error) {
 }
 
 //DetectEdgeStop stop
-func (p *Pin) DetectEdgeStop() error {
+/*func (p *Pin) DetectEdgeStop() error {
 	if p.curMode != PinModeInput {
 		return ErrBadPinMode
 	}
@@ -68,5 +78,20 @@ func (p *Pin) DetectEdgeStop() error {
 	defer p.mu.Unlock()
 	_, err := p.DetectEdge(EdgeNone)
 
+	return err
+}*/
+
+//DetectEdgeStop stop
+func (p *Pin) detectEdgeStop() (err error) {
+	if p.edgeChan != nil {
+		close(p.edgeChan)
+	}
+	if p.epoll != nil {
+		err = p.epoll.Stop()
+	}
+
+	p.edgeToDetect = EdgeNone
+	p.epoll = nil
+	p.edgeChan = nil
 	return err
 }
