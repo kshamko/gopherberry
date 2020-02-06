@@ -1,20 +1,23 @@
 package gopherberry
 
 import (
-	"os"
 	"sync"
 
 	"github.com/pkg/errors"
 )
 
 type chipVersion int
+type addressType int
 
 const (
 	//NoBCMNum means that pin has no bcm number (ground, voltage pins)
 	NoBCMNum = -1
 	//ARM2837 for corresonding chip type
-	ARM2837    chipVersion = iota
-	addressInc             = 1
+	ARM2837 chipVersion = iota
+
+	addrPhysical addressType = iota
+	addrVirtual
+	addrBus
 )
 
 var (
@@ -60,7 +63,8 @@ type PWMChannelConfig struct {
 //Raspberry struct
 type Raspberry struct {
 	chip       chip
-	mmap       *mmap
+	mmapGPIO   *mmap
+	mmapPWM    *mmap
 	memOffsets map[uint64]int
 	pwmRunning bool
 
@@ -68,20 +72,24 @@ type Raspberry struct {
 }
 
 type chip interface {
+	/*
+		getBasePeriphialsAddressPhys() uint64
+		//getBasePeriphialsAddressBus() uint64
+		getGPIORegisters() gpioRegisters
+		getPWMRegisters() pwmRegisters
+		getPinModePWM(pinNumBCM int) (error, PinMode)*/
+
 	getPinBCM(pinNumBoard int) int
-	getBasePeriphialsAddressPhys() uint64
-	//getBasePeriphialsAddressBus() uint64
-	getGPIORegisters() gpioRegisters
-	getPWMRegisters() pwmRegisters
-	getPinModePWM(pinNumBCM int) (error, PinMode)
+	getGPIORegisters() (gpioRegisters, addressType)
+	getPWMRegisters() (pwmRegisters, addressType)
 	addrBus2Phys(uint64) uint64
 
-	gpgsel(bcm int, mode PinMode) (registerAddress uint64, operation int)
-	gpset(bcm int) (registerAddress uint64, operation int)
-	gpclr(bcm int) (registerAddress uint64, operation int)
-	gplev(bcm int) (registerAddress uint64, operation int)
+	gpgsel(bcm int, mode PinMode) (registerAddress uint64, addressType addressType, operation int)
+	gpset(bcm int) (registerAddress uint64, addressType addressType, operation int)
+	gpclr(bcm int) (registerAddress uint64, addressType addressType, operation int)
+	gplev(bcm int) (registerAddress uint64, addressType addressType, operation int)
 
-	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int)
+	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int)
 	//pwmRng() (registerAddress uint64, operation int)
 }
 
@@ -96,10 +104,12 @@ func New(chipVersion chipVersion) (*Raspberry, error) {
 	raspberry := &Raspberry{
 		chip: c,
 	}
-	err := raspberry.initMmap()
+
+	gpioMmap, err := raspberry.initMmapGPIO(c.getGPIORegisters())
 	if err != nil {
 		return nil, errors.Wrap(err, "can't init mmap")
 	}
+	raspberry.mmapGPIO = gpioMmap
 	return raspberry, nil
 }
 
@@ -121,7 +131,7 @@ func (r *Raspberry) GetPin(pinNumBoard int) (*Pin, error) {
 //StartPWM func enables PWM
 //
 //
-func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
+/*func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -133,7 +143,7 @@ func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
 
 	r.pwmRunning = true
 	return r.mmap.run(offset, operation)
-}
+}*/
 
 //StopPWM func disables PWM
 func (r *Raspberry) StopPWM() error {
@@ -145,7 +155,30 @@ func (r *Raspberry) StopPWM() error {
 	return nil
 }
 
-func (r *Raspberry) initMmap() error {
+/*func (r *Raspberry) initMmap(physicalAddresses []uint64) (*mmap, error) {
+	sort.Slice(physicalAddresses, func(i, j int) bool { return physicalAddresses[i] < physicalAddresses[j] })
+	return newMmap(physAddresses)
+}*/
+
+func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addressType) (*mmap, error) {
+
+	physicalAddresses := []uint64{}
+
+	for _, registers := range gpioRegisters {
+		for _, register := range registers {
+
+			if addressType == addrBus {
+				register = r.chip.addrBus2Phys(register)
+			}
+
+			physicalAddresses = append(physicalAddresses, register)
+		}
+	}
+
+	return newMmap(physicalAddresses)
+}
+
+/*func (r *Raspberry) initMmap() error {
 	startPhysAddress := r.chip.getBasePeriphialsAddressPhys()
 	mmap, err := newMmap(int64(startPhysAddress), os.Getpagesize())
 	if err != nil {
@@ -160,11 +193,11 @@ func (r *Raspberry) runMmapCommand(busAddress uint64, operation int) error {
 	if !ok {
 		return ErrNoOffset
 	}*/
-	//base := r.chip.getBasePeriphialsAddressPhys() & 0xff000000
-	physAddr := r.chip.addrBus2Phys(busAddress)
+//base := r.chip.getBasePeriphialsAddressPhys() & 0xff000000
+/*physAddr := r.chip.addrBus2Phys(busAddress)
 	offset := int(physAddr - r.chip.getBasePeriphialsAddressPhys())
 	return r.mmap.run(offset, operation)
-}
+}*/
 
 /*func (r *Raspberry) Close() {
 	r.mmap.Close()

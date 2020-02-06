@@ -2,6 +2,7 @@ package gopherberry
 
 import (
 	"os"
+	"sort"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -13,10 +14,11 @@ type mmap struct {
 	length      int
 	data        []byte
 	mu          sync.RWMutex
-	datap       *[200]int
+	datap       *[100]int
+	offsets     map[uint64]int
 }
 
-func newMmap(baseAddress int64, length int) (*mmap, error) {
+func newMmap(addressesPhysical []uint64) (*mmap, error) {
 	// to open /dev/mem we need root. as we use /dev/mem => we'll use physical addresses
 	// http://man7.org/linux/man-pages/man4/mem.4.html
 	file, err := os.OpenFile("/dev/mem", os.O_RDWR|os.O_SYNC, 0)
@@ -28,15 +30,17 @@ func newMmap(baseAddress int64, length int) (*mmap, error) {
 	}
 	defer file.Close()
 
+	baseAddress, length, offsets := mmapParameters(addressesPhysical)
+
 	data, err := syscall.Mmap(
 		int(file.Fd()),
 		baseAddress,
-		length, //os.Getpagesize(),
+		length,
 		syscall.PROT_READ|syscall.PROT_WRITE,
 		syscall.MAP_SHARED,
 	)
 
-	mmapArray := (*[200]int)(unsafe.Pointer(&data[0]))
+	mmapArray := (*[100]int)(unsafe.Pointer(&data[0]))
 
 	if err != nil {
 		return nil, err
@@ -48,29 +52,41 @@ func newMmap(baseAddress int64, length int) (*mmap, error) {
 		length:      length,
 		mu:          sync.RWMutex{},
 		datap:       mmapArray,
+		offsets:     offsets,
 	}, nil
 }
 
-func (mmap *mmap) run(offset int, command int) error {
-	if len(mmap.data) < offset {
-		return ErrNoMmap
-	}
-
-	mmap.mu.Lock()
-	//fmt.Printf("[DEBUG] mmap state. Offset: %d, Addr: %X, byte: %X\n", offset, mmap.datap[offset], mmap.data[offset])
-	mmap.datap[offset] = command
-	mmap.mu.Unlock()
-
-	return nil
-}
-
-func (mmap *mmap) get(offset int) (state int, err error) {
-	if len(mmap.data) < offset {
-		return 0, ErrNoMmap
-	}
+func (mmap *mmap) run(address uint64, command int) error {
 
 	mmap.mu.Lock()
 	defer mmap.mu.Unlock()
 
-	return mmap.datap[offset], nil
+	if offset, ok := mmap.offsets[address]; ok {
+		mmap.datap[offset] = command
+		return nil
+	}
+
+	return ErrNoMmap
+}
+
+//
+func (mmap *mmap) get(address uint64) (state int, err error) {
+	mmap.mu.Lock()
+	defer mmap.mu.Unlock()
+
+	if offset, ok := mmap.offsets[address]; ok {
+		return mmap.datap[offset], nil
+	}
+
+	return 0, ErrNoMmap
+}
+
+//
+func mmapParameters(addressesPhysical []uint64) (baseAddress int64, length int, offsets map[uint64]int) {
+	sort.Slice(addressesPhysical, func(i, j int) bool { return addressesPhysical[i] < addressesPhysical[j] })
+
+	for i, addr := range addressesPhysical {
+		offsets[addr] = i
+	}
+	return int64(addressesPhysical[0]), len(addressesPhysical), offsets
 }

@@ -117,22 +117,22 @@ func (chip *Chip2837) addrBus2Phys(addr uint64) uint64 {
 }
 
 //
-func (chip *Chip2837) getBasePeriphialsAddressPhys() uint64 {
+/*func (chip *Chip2837) getBasePeriphialsAddressPhys() uint64 {
 	return chip.periphialsBaseAddrPhys
 }
 
 //
 func (chip *Chip2837) getBasePeriphialsAddressBus() uint64 {
 	return chip.periphialsBaseAddrBus
-}
+}*/
 
 //
-func (chip *Chip2837) getGPIORegisters() gpioRegisters {
-	return chip.gpioRegisters
+func (chip *Chip2837) getGPIORegisters() (gpioRegisters, addressType) {
+	return chip.gpioRegisters, addrBus
 }
 
-func (chip *Chip2837) getPWMRegisters() pwmRegisters {
-	return chip.pwmRegisters
+func (chip *Chip2837) getPWMRegisters() (pwmRegisters, addressType) {
+	return chip.pwmRegisters, addrBus
 }
 
 func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
@@ -158,7 +158,7 @@ func (chip *Chip2837) getPinModePWM(pinNumBCM int) (error, PinMode) {
 }
 
 //
-func (chip *Chip2837) gpgsel(bcm int, mode PinMode) (registerAddress uint64, operation int) {
+func (chip *Chip2837) gpgsel(bcm int, mode PinMode) (registerAddress uint64, addressType addressType, addressToperation int) {
 	//calculate proper register offset
 	addressOffset := bcm / 10 //1 register for 10 pins
 	//calculate operation. all operations are assumed to be 32-bit
