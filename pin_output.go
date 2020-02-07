@@ -13,8 +13,8 @@ func (p *Pin) SetHigh() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	address, operation := p.pi.chip.gpset(p.bcmNum)
-	return p.pi.runMmapCommand(address, operation)
+	address, addressType, operation := p.pi.chip.gpset(p.bcmNum)
+	return p.pi.runMmapGPIOCommand(address, addressType, operation)
 }
 
 //SetLow sets an output to 0
@@ -25,8 +25,8 @@ func (p *Pin) SetLow() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	address, operation := p.pi.chip.gpclr(p.bcmNum)
-	return p.pi.runMmapCommand(address, operation)
+	address, addressType, operation := p.pi.chip.gpclr(p.bcmNum)
+	return p.pi.runMmapGPIOCommand(address, addressType, operation)
 }
 
 //Level reports pin output state
@@ -37,8 +37,8 @@ func (p *Pin) Level() (bool, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	address, operation := p.pi.chip.gplev(p.bcmNum)
-	state, err := p.memState(address)
+	address, addressType, operation := p.pi.chip.gplev(p.bcmNum)
+	state, err := p.pi.memStateGPIO(address, addressType)
 	if err != nil {
 		return false, err
 	}

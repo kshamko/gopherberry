@@ -89,7 +89,7 @@ type chip interface {
 	gpclr(bcm int) (registerAddress uint64, addressType addressType, operation int)
 	gplev(bcm int) (registerAddress uint64, addressType addressType, operation int)
 
-	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int)
+	//pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int)
 	//pwmRng() (registerAddress uint64, operation int)
 }
 
@@ -178,6 +178,22 @@ func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addres
 	return newMmap(physicalAddresses)
 }
 
+func (r *Raspberry) runMmapGPIOCommand(address uint64, addressType addressType, operation int) error {
+
+	if addressType == addrBus {
+		address = r.chip.addrBus2Phys(address)
+	}
+
+	return r.mmapGPIO.run(address, operation)
+}
+
+func (r *Raspberry) memStateGPIO(address uint64, addressType addressType) (int, error) {
+	if addressType == addrBus {
+		address = r.chip.addrBus2Phys(address)
+	}
+	return r.mmapGPIO.get(address)
+}
+
 /*func (r *Raspberry) initMmap() error {
 	startPhysAddress := r.chip.getBasePeriphialsAddressPhys()
 	mmap, err := newMmap(int64(startPhysAddress), os.Getpagesize())
@@ -188,11 +204,8 @@ func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addres
 	return nil
 }
 
-func (r *Raspberry) runMmapCommand(busAddress uint64, operation int) error {
-	/*offset, ok := p.pi.memOffsets[address]
-	if !ok {
-		return ErrNoOffset
-	}*/
+*/
+
 //base := r.chip.getBasePeriphialsAddressPhys() & 0xff000000
 /*physAddr := r.chip.addrBus2Phys(busAddress)
 	offset := int(physAddr - r.chip.getBasePeriphialsAddressPhys())

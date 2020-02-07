@@ -50,8 +50,8 @@ func (p *Pin) mode(mode PinMode) error {
 	defer p.mu.Unlock()
 
 	p.curMode = mode
-	address, operation := p.pi.chip.gpgsel(p.bcmNum, mode)
-	return p.pi.runMmapCommand(address, operation)
+	address, addressType, operation := p.pi.chip.gpgsel(p.bcmNum, mode)
+	return p.pi.runMmapGPIOCommand(address, addressType, operation)
 }
 
 //
@@ -64,10 +64,10 @@ func (p *Pin) mode(mode PinMode) error {
 }*/
 
 //
-func (p *Pin) memState(address uint64) (int, error) {
+/*func (p *Pin) memState(address uint64) (int, error) {
 	offset, ok := p.pi.memOffsets[address]
 	if !ok {
 		return 0, ErrNoOffset
 	}
-	return p.pi.mmap.get(offset)
-}
+	return p.pi.mmapGPIO.get(offset)
+}*/

@@ -158,28 +158,28 @@ func (chip *Chip2837) getPinModePWM(pinNumBCM int) (error, PinMode) {
 }
 
 //
-func (chip *Chip2837) gpgsel(bcm int, mode PinMode) (registerAddress uint64, addressType addressType, addressToperation int) {
+func (chip *Chip2837) gpgsel(bcm int, mode PinMode) (registerAddress uint64, addressType addressType, operation int) {
 	//calculate proper register offset
 	addressOffset := bcm / 10 //1 register for 10 pins
 	//calculate operation. all operations are assumed to be 32-bit
 	shift := (uint8(bcm) % 10) * 3 // 10 pins per register, command of 3 bits
 	operation = int(mode) << shift
-	return chip.gpioRegisters["GPFSEL"][addressOffset], operation
+	return chip.gpioRegisters["GPFSEL"][addressOffset], addrBus, operation
 }
 
 //
-func (chip *Chip2837) gpset(bcm int) (registerAddress uint64, operation int) {
-	return chip.twoBankCommand(bcm, "GPSET")
+func (chip *Chip2837) gpset(bcm int) (registerAddress uint64, addressType addressType, operation int) {
+	return chip.twoBankCommand(bcm, "GPSET", addrBus)
 }
 
 //
-func (chip *Chip2837) gpclr(bcm int) (registerAddress uint64, operation int) {
-	return chip.twoBankCommand(bcm, "GPCLR")
+func (chip *Chip2837) gpclr(bcm int) (registerAddress uint64, addressType addressType, operation int) {
+	return chip.twoBankCommand(bcm, "GPCLR", addrBus)
 }
 
 //
-func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, operation int) {
-	return chip.twoBankCommand(bcm, "GPLEV")
+func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, addressType addressType, operation int) {
+	return chip.twoBankCommand(bcm, "GPLEV", addrBus)
 }
 
 func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int) {
@@ -190,9 +190,9 @@ func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint6
 	return chip.pwmRegisters["CTL"], operation
 }
 
-func (chip *Chip2837) twoBankCommand(bcm int, commandName string) (registerAddress uint64, operation int) {
+func (chip *Chip2837) twoBankCommand(bcm int, commandName string, addrType addressType) (registerAddress uint64, addressType addressType, operation int) {
 	addressOffset := bcm / 32 //1 register for 32 pins
 	shift := (uint8(bcm) % 32)
 	operation = 1 << shift
-	return chip.gpioRegisters[commandName][addressOffset], operation
+	return chip.gpioRegisters[commandName][addressOffset], addrType, operation
 }
