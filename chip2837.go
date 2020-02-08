@@ -71,18 +71,29 @@ func newChip2837() chip {
 		},
 		gpioRegisters: map[string][]uint64{
 			"GPFSEL":   {0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014}, //select pin mode
-			"GPSET":    {0x7E20001C, 0x7E200020},                                                 //set pin high
-			"GPCLR":    {0x7E200028, 0x7E20002C},                                                 //set pin low
-			"GPLEV":    {0x7E200034, 0x7E200038},                                                 //get pin level
-			"GPEDS":    {0x7E200040, 0x7E200044},                                                 //rw
-			"GPREN":    {0x7E20004C, 0x7E200050},                                                 //rw
-			"GPFEN":    {0x7E200058, 0x7E20005C},                                                 //rw
-			"GPHEN":    {0x7E200064, 0x7E200068},                                                 //rw
-			"GPLEN":    {0x7E200070, 0x7E200074},                                                 //rw
-			"GPAREN":   {0x7E20007C, 0x7E200080},                                                 //rw
-			"GPAFEN":   {0x7E200088, 0x7E20008C},                                                 //rw
-			"GPPUD":    {0x7E200094},                                                             //rw
-			"GPPUDCLK": {0x7E200098, 0x7E20009C},                                                 //rw
+			"rsrvd1":   {0x7E20018},
+			"GPSET":    {0x7E20001C, 0x7E200020}, //set pin high
+			"rsrvd2":   {0x7E20024},
+			"GPCLR":    {0x7E200028, 0x7E20002C}, //set pin low
+			"rsrvd3":   {0x7E20030},
+			"GPLEV":    {0x7E200034, 0x7E200038}, //get pin level
+			"rsrvd4":   {0x7E2003C},
+			"GPEDS":    {0x7E200040, 0x7E200044}, //rw
+			"rsrvd5":   {0x7E20048},
+			"GPREN":    {0x7E20004C, 0x7E200050}, //rw
+			"rsrvd6":   {0x7E20054},
+			"GPFEN":    {0x7E200058, 0x7E20005C}, //rw
+			"rsrvd7":   {0x7E20060},
+			"GPHEN":    {0x7E200064, 0x7E200068}, //rw
+			"rsrvd8":   {0x7E2006C},
+			"GPLEN":    {0x7E200070, 0x7E200074}, //rw
+			"rsrvd9":   {0x7E20078},
+			"GPAREN":   {0x7E20007C, 0x7E200080}, //rw
+			"rsrvd10":  {0x7E20084},
+			"GPAFEN":   {0x7E200088, 0x7E20008C}, //rw
+			"rsrvd11":  {0x7E20090},
+			"GPPUD":    {0x7E200094},             //rw
+			"GPPUDCLK": {0x7E200098, 0x7E20009C}, //rw
 		},
 		pwm0: map[int]PinMode{ //map[bcmNum]PinMode
 			12: PinModeALT0,
