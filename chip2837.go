@@ -71,27 +71,27 @@ func newChip2837() chip {
 		},
 		gpioRegisters: map[string][]uint64{
 			"GPFSEL":   {0x7E200000, 0x7E200004, 0x7E200008, 0x7E20000C, 0x7E200010, 0x7E200014}, //select pin mode
-			"rsrvd1":   {0x7E20018},
+			"rsrvd1":   {0x7E200018},
 			"GPSET":    {0x7E20001C, 0x7E200020}, //set pin high
-			"rsrvd2":   {0x7E20024},
+			"rsrvd2":   {0x7E200024},
 			"GPCLR":    {0x7E200028, 0x7E20002C}, //set pin low
-			"rsrvd3":   {0x7E20030},
+			"rsrvd3":   {0x7E200030},
 			"GPLEV":    {0x7E200034, 0x7E200038}, //get pin level
-			"rsrvd4":   {0x7E2003C},
+			"rsrvd4":   {0x7E20003C},
 			"GPEDS":    {0x7E200040, 0x7E200044}, //rw
-			"rsrvd5":   {0x7E20048},
+			"rsrvd5":   {0x7E200048},
 			"GPREN":    {0x7E20004C, 0x7E200050}, //rw
-			"rsrvd6":   {0x7E20054},
+			"rsrvd6":   {0x7E200054},
 			"GPFEN":    {0x7E200058, 0x7E20005C}, //rw
-			"rsrvd7":   {0x7E20060},
+			"rsrvd7":   {0x7E200060},
 			"GPHEN":    {0x7E200064, 0x7E200068}, //rw
-			"rsrvd8":   {0x7E2006C},
+			"rsrvd8":   {0x7E20006C},
 			"GPLEN":    {0x7E200070, 0x7E200074}, //rw
-			"rsrvd9":   {0x7E20078},
+			"rsrvd9":   {0x7E200078},
 			"GPAREN":   {0x7E20007C, 0x7E200080}, //rw
-			"rsrvd10":  {0x7E20084},
+			"rsrvd10":  {0x7E200084},
 			"GPAFEN":   {0x7E200088, 0x7E20008C}, //rw
-			"rsrvd11":  {0x7E20090},
+			"rsrvd11":  {0x7E200090},
 			"GPPUD":    {0x7E200094},             //rw
 			"GPPUDCLK": {0x7E200098, 0x7E20009C}, //rw
 		},

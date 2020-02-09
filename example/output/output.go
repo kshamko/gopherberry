@@ -20,7 +20,8 @@ func main() {
 	if err != nil {
 		fmt.Println("[ERROR] cant set mode to pin 17(11)", err)
 	}
-
+	p17.SetLow()
+	
 	err = p17.SetHigh()
 	if err != nil {
 		fmt.Println("[ERROR] cant set high to pin 17(11)", err)
@@ -28,6 +29,7 @@ func main() {
 
 	p26, _ := r.GetPin(37)
 	p26.ModeOutput()
+	p26.SetLow()
 
 	l, _ := p17.Level()
 	fmt.Println("[INFO] pin17 level:", l)

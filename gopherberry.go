@@ -163,18 +163,15 @@ func (r *Raspberry) StopPWM() error {
 func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addressType) (*mmap, error) {
 
 	physicalAddresses := []uint64{}
-
 	for _, registers := range gpioRegisters {
 		for _, register := range registers {
 
 			if addressType == addrBus {
 				register = r.chip.addrBus2Phys(register)
 			}
-
 			physicalAddresses = append(physicalAddresses, register)
 		}
 	}
-
 	return newMmap(physicalAddresses)
 }
 
