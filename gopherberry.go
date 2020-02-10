@@ -62,10 +62,10 @@ type PWMChannelConfig struct {
 
 //Raspberry struct
 type Raspberry struct {
-	chip       chip
-	mmapGPIO   *mmap
-	mmapPWM    *mmap
-	memOffsets map[uint64]int
+	chip     chip
+	mmapGPIO *mmap
+	mmapPWM  *mmap
+
 	pwmRunning bool
 
 	mu sync.Mutex
@@ -83,14 +83,16 @@ type chip interface {
 	getGPIORegisters() (gpioRegisters, addressType)
 	getPWMRegisters() (pwmRegisters, addressType)
 	addrBus2Phys(uint64) uint64
+	getPinModePWM(pinNumBCM int) (PinMode, error)
 
 	gpgsel(bcm int, mode PinMode) (registerAddress uint64, addressType addressType, operation int)
 	gpset(bcm int) (registerAddress uint64, addressType addressType, operation int)
 	gpclr(bcm int) (registerAddress uint64, addressType addressType, operation int)
 	gplev(bcm int) (registerAddress uint64, addressType addressType, operation int)
 
-	//pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int)
-	//pwmRng() (registerAddress uint64, operation int)
+	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int)
+	pwmRng(bcm int, val int) (registerAddress uint64, addressType addressType, operation int)
+	pwmDat(bcm int, val int) (registerAddress uint64, addressType addressType, operation int)
 }
 
 //New func
@@ -107,9 +109,16 @@ func New(chipVersion chipVersion) (*Raspberry, error) {
 
 	gpioMmap, err := raspberry.initMmapGPIO(c.getGPIORegisters())
 	if err != nil {
-		return nil, errors.Wrap(err, "can't init mmap")
+		return nil, errors.Wrap(err, "can't init gpio mmap")
 	}
 	raspberry.mmapGPIO = gpioMmap
+
+	pwmMmap, err := raspberry.initMmapPWM(c.getPWMRegisters())
+	if err != nil {
+		return nil, errors.Wrap(err, "can't init pwm mmap")
+	}
+	raspberry.mmapPWM = pwmMmap
+
 	return raspberry, nil
 }
 
@@ -131,19 +140,17 @@ func (r *Raspberry) GetPin(pinNumBoard int) (*Pin, error) {
 //StartPWM func enables PWM
 //
 //
-/*func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
+func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	address, operation := r.chip.pwmCtl(cfg1, cfg2)
-	offset, ok := r.memOffsets[address]
-	if !ok {
-		return ErrNoOffset
+	address, addressType, operation := r.chip.pwmCtl(cfg1, cfg2)
+	if addressType == addrBus {
+		address = r.chip.addrBus2Phys(address)
 	}
 
-	r.pwmRunning = true
-	return r.mmap.run(offset, operation)
-}*/
+	return r.mmapPWM.run(address, operation)
+}
 
 //StopPWM func disables PWM
 func (r *Raspberry) StopPWM() error {
@@ -154,11 +161,6 @@ func (r *Raspberry) StopPWM() error {
 
 	return nil
 }
-
-/*func (r *Raspberry) initMmap(physicalAddresses []uint64) (*mmap, error) {
-	sort.Slice(physicalAddresses, func(i, j int) bool { return physicalAddresses[i] < physicalAddresses[j] })
-	return newMmap(physAddresses)
-}*/
 
 func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addressType) (*mmap, error) {
 
@@ -175,6 +177,21 @@ func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addres
 	return newMmap(physicalAddresses)
 }
 
+//
+func (r *Raspberry) initMmapPWM(pwmRegisters pwmRegisters, addressType addressType) (*mmap, error) {
+
+	physicalAddresses := []uint64{}
+	for _, register := range pwmRegisters {
+
+		if addressType == addrBus {
+			register = r.chip.addrBus2Phys(register)
+		}
+		physicalAddresses = append(physicalAddresses, register)
+
+	}
+	return newMmap(physicalAddresses)
+}
+
 func (r *Raspberry) runMmapGPIOCommand(address uint64, addressType addressType, operation int) error {
 
 	if addressType == addrBus {
@@ -182,6 +199,15 @@ func (r *Raspberry) runMmapGPIOCommand(address uint64, addressType addressType, 
 	}
 
 	return r.mmapGPIO.run(address, operation)
+}
+
+func (r *Raspberry) runMmapPWMCommand(address uint64, addressType addressType, operation int) error {
+
+	if addressType == addrBus {
+		address = r.chip.addrBus2Phys(address)
+	}
+
+	return r.mmapPWM.run(address, operation)
 }
 
 func (r *Raspberry) memStateGPIO(address uint64, addressType addressType) (int, error) {

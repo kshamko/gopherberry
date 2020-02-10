@@ -155,17 +155,17 @@ func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
 	return NoBCMNum
 }
 
-func (chip *Chip2837) getPinModePWM(pinNumBCM int) (error, PinMode) {
+func (chip *Chip2837) getPinModePWM(pinNumBCM int) (PinMode, error) {
 
 	if val, ok := chip.pwm0[pinNumBCM]; ok {
-		return nil, val
+		return val, nil
 	}
 
 	if val, ok := chip.pwm1[pinNumBCM]; ok {
-		return nil, val
+		return val, nil
 	}
 
-	return ErrNoPWM, PinModeNA
+	return PinModeNA, ErrNoPWM
 }
 
 //
@@ -193,12 +193,36 @@ func (chip *Chip2837) gplev(bcm int) (registerAddress uint64, addressType addres
 	return chip.twoBankCommand(bcm, "GPLEV", addrBus)
 }
 
-func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, operation int) {
+func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int) {
 	operation = cfg2.MSEnable<<15 + cfg2.UseFIF0<<13 + cfg2.Polarity<<12 + cfg2.SilenceBit<<11
 	operation += cfg2.RepeatLast<<10 + cfg2.Mode<<9 + cfg2.ChanEnabled<<8
 	operation += cfg1.MSEnable<<7 + cfg1.UseFIF0<<5 + cfg1.Polarity<<4 + cfg1.SilenceBit<<3
 	operation += cfg1.RepeatLast<<2 + cfg1.Mode<<1 + cfg1.ChanEnabled
-	return chip.pwmRegisters["CTL"], operation
+	return chip.pwmRegisters["CTL"], addrBus, operation
+}
+
+func (chip *Chip2837) pwmRng(bcm int, val int) (registerAddress uint64, addressType addressType, operation int) {
+	if _, ok := chip.pwm0[bcm]; ok {
+		return chip.pwmRegisters["RNG1"], addrBus, val
+	}
+
+	if _, ok := chip.pwm1[bcm]; ok {
+		return chip.pwmRegisters["RNG2"], addrBus, val
+	}
+
+	return 0, addrBus, val
+}
+
+func (chip *Chip2837) pwmDat(bcm int, val int) (registerAddress uint64, addressType addressType, operation int) {
+	if _, ok := chip.pwm0[bcm]; ok {
+		return chip.pwmRegisters["DAT1"], addrBus, val
+	}
+
+	if _, ok := chip.pwm1[bcm]; ok {
+		return chip.pwmRegisters["DAT2"], addrBus, val
+	}
+
+	return 0, addrBus, val
 }
 
 func (chip *Chip2837) twoBankCommand(bcm int, commandName string, addrType addressType) (registerAddress uint64, addressType addressType, operation int) {
