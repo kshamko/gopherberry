@@ -109,14 +109,17 @@ func newChip2837() chip {
 			53: PinModeALT1,
 		},
 		pwmRegisters: map[string]uint64{
-			"CTL":  0x7E20C000,
-			"STA":  0x7E20C004,
-			"DMAC": 0x7E20C008,
-			"RNG1": 0x7E20C010,
-			"DAT1": 0x7E20C014,
-			"FIF1": 0x7E20C018,
-			"RNG2": 0x7E20C020,
-			"DAT2": 0x7E20C024,
+			"CTL":   0x7E20C000, // 0	0
+			"STA":   0x7E20C004, // 2    4
+			"DMAC":  0x7E20C008, // 3    4
+			"RSRV0": 0x7E20C009,
+			"RNG1":  0x7E20C010, // 4 2
+			"DAT1":  0x7E20C014, // 5 4
+			//6
+			"FIF1":  0x7E20C018, //7  4
+			"RSRV1": 0x7E20C019,
+			"RNG2":  0x7E20C020, // 8 2
+			"DAT2":  0x7E20C024, // 9 4
 		},
 	}
 

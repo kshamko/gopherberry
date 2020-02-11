@@ -1,8 +1,8 @@
 package gopherberry
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"sort"
 	"sync"
 	"syscall"
@@ -40,13 +40,12 @@ func newMmap(addressesPhysical []uint64) (*mmap, error) {
 		syscall.PROT_READ|syscall.PROT_WRITE,
 		syscall.MAP_SHARED,
 	)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
-	mmapArray := (*[100]int)(unsafe.Pointer(&data[0]))
 
+	mmapArray := (*[100]int)(unsafe.Pointer(&data[0]))
 
 	return &mmap{
 		data:        data,
@@ -64,7 +63,7 @@ func (mmap *mmap) run(address uint64, command int) error {
 	defer mmap.mu.Unlock()
 
 	if offset, ok := mmap.offsets[address]; ok {
-		fmt.Println(offset)	
+		fmt.Println(offset)
 		mmap.datap[offset] = command
 		return nil
 	}
@@ -87,12 +86,9 @@ func (mmap *mmap) get(address uint64) (state int, err error) {
 //
 func mmapParameters(addressesPhysical []uint64) (baseAddress int64, length int, offsets map[uint64]int) {
 	sort.Slice(addressesPhysical, func(i, j int) bool { return addressesPhysical[i] < addressesPhysical[j] })
-
 	offsets = map[uint64]int{}
 	for i, addr := range addressesPhysical {
-		fmt.Println(i, addr)
 		offsets[addr] = i
 	}
-	
 	return int64(addressesPhysical[0]), len(addressesPhysical), offsets
 }

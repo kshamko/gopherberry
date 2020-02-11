@@ -182,31 +182,25 @@ func (r *Raspberry) initMmapPWM(pwmRegisters pwmRegisters, addressType addressTy
 
 	physicalAddresses := []uint64{}
 	for _, register := range pwmRegisters {
-
 		if addressType == addrBus {
 			register = r.chip.addrBus2Phys(register)
 		}
 		physicalAddresses = append(physicalAddresses, register)
-
 	}
 	return newMmap(physicalAddresses)
 }
 
 func (r *Raspberry) runMmapGPIOCommand(address uint64, addressType addressType, operation int) error {
-
 	if addressType == addrBus {
 		address = r.chip.addrBus2Phys(address)
 	}
-
 	return r.mmapGPIO.run(address, operation)
 }
 
 func (r *Raspberry) runMmapPWMCommand(address uint64, addressType addressType, operation int) error {
-
 	if addressType == addrBus {
 		address = r.chip.addrBus2Phys(address)
 	}
-
 	return r.mmapPWM.run(address, operation)
 }
 
@@ -216,96 +210,3 @@ func (r *Raspberry) memStateGPIO(address uint64, addressType addressType) (int, 
 	}
 	return r.mmapGPIO.get(address)
 }
-
-/*func (r *Raspberry) initMmap() error {
-	startPhysAddress := r.chip.getBasePeriphialsAddressPhys()
-	mmap, err := newMmap(int64(startPhysAddress), os.Getpagesize())
-	if err != nil {
-		return err
-	}
-	r.mmap = mmap
-	return nil
-}
-
-*/
-
-//base := r.chip.getBasePeriphialsAddressPhys() & 0xff000000
-/*physAddr := r.chip.addrBus2Phys(busAddress)
-	offset := int(physAddr - r.chip.getBasePeriphialsAddressPhys())
-	return r.mmap.run(offset, operation)
-}*/
-
-/*func (r *Raspberry) Close() {
-	r.mmap.Close()
-}*/
-
-//TODO refactor mmap load
-/*func (r *Raspberry) initMmap() error {
-
-/*var (
-	minAddress, maxAddress uint64
-)
-
-for _, addresses := range r.chip.getGPIORegisters() {
-	for _, address := range addresses {
-		if minAddress == 0 {
-			minAddress = address
-		}
-
-		if minAddress > address {
-			minAddress = address
-		}
-
-		if maxAddress < address {
-			maxAddress = address
-		}
-	}
-}*/
-
-/*minAddress := uint64(0x7E200000)
-	mmapBaseAddr := mmapBaseAddress(minAddress, r.chip.getBasePeriphialsAddress())
-	mmapLen := os.Getpagesize() //(maxAddress - minAddress) / addressInc
-
-	mmap, err := newMmap(int64(mmapBaseAddr), mmapLen)
-
-	if err != nil {
-		return err
-	}
-	r.mmap = mmap
-	r.memOffsets = offsetsGPIO(r.chip.getGPIORegisters(), minAddress)
-	for k, v := range offsetsPWM(r.chip.getPWMRegisters(), minAddress) {
-		r.memOffsets[k] = v
-	}
-
-	return nil
-}
-
-//
-func mmapBaseAddress(virtAddress, physBaseAddress uint64) uint64 {
-	virtBase := virtAddress & 0xff000000
-	return physBaseAddress + (virtAddress - virtBase)
-}
-
-//
-func offsetsGPIO(registers gpioRegisters, startAddress uint64) map[uint64]int {
-	offsets := map[uint64]int{}
-	for _, addresses := range registers {
-		for _, address := range addresses {
-			offsets[address] = offset(address, startAddress, addressInc)
-		}
-	}
-	return offsets
-}
-
-func offsetsPWM(registers pwmRegisters, startAddress uint64) map[uint64]int {
-	offsets := map[uint64]int{}
-	for _, address := range registers {
-		offsets[address] = offset(address, startAddress, addressInc)
-	}
-	return offsets
-}
-
-//
-func offset(address, startAddress uint64, addressInc int) int {
-	return int((address - startAddress)) / addressInc
-}*/
