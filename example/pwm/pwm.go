@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"time"
+	//"time"
 
 	"github.com/kshamko/gopherberry"
 )
@@ -19,7 +19,10 @@ func main() {
 		MSEnable:    1,
 		ChanEnabled: 1,
 	}
-	r.StartPWM(c, gopherberry.PWMChannelConfig{})
+	err = r.StartPWM(c, gopherberry.PWMChannelConfig{})
+	if err != nil {
+		fmt.Println("[ERROR] can't init pwm", err)
+	}
 
 	p18, _ := r.GetPin(12)
 	err = p18.ModePWM()
@@ -33,7 +36,7 @@ func main() {
 	// (source frequency divided by cycle length => 64000/32 = 2000)
 
 	// five times smoothly fade in and out
-	for i := 0; i < 5; i++ {
+	/*for i := 0; i < 5; i++ {
 		for i := int(0); i < 32; i++ { // increasing brightness
 			p18.DutyCycle(i, 32)
 			time.Sleep(time.Second / 32)
@@ -42,6 +45,6 @@ func main() {
 			p18.DutyCycle(i, 32)
 			time.Sleep(time.Second / 32)
 		}
-	}
+	}*/
 
 }
