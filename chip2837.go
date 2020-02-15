@@ -13,6 +13,9 @@ type Chip2837 struct {
 	gpioRegisters gpioRegisters
 	pwm0, pwm1    map[int]PinMode
 	pwmRegisters  pwmRegisters
+
+	clock0, clock1, clock2 map[int]PinMode
+	clockRegisters         clockRegisters
 }
 
 //NewChip2837 func
@@ -109,17 +112,36 @@ func newChip2837() chip {
 			53: PinModeALT1,
 		},
 		pwmRegisters: map[string]uint64{
-			"CTL":   0x7E20C000, // 0	0
-			"STA":   0x7E20C004, // 2    4
-			"DMAC":  0x7E20C008, // 3    4
-			"RSRV0": 0x7E20C009,
-			"RNG1":  0x7E20C010, // 4 2
-			"DAT1":  0x7E20C014, // 5 4
-			//6
-			"FIF1":  0x7E20C018, //7  4
-			"RSRV1": 0x7E20C019,
-			"RNG2":  0x7E20C020, // 8 2
-			"DAT2":  0x7E20C024, // 9 4
+			"CTL":   0x7E20C000,
+			"STA":   0x7E20C004,
+			"DMAC":  0x7E20C008,
+			"RSRV0": 0x7E20C00C,
+			"RNG1":  0x7E20C010,
+			"DAT1":  0x7E20C014,
+			"FIF1":  0x7E20C018,
+			"RSRV1": 0x7E20C01C,
+			"RNG2":  0x7E20C020,
+			"DAT2":  0x7E20C024,
+		},
+		clock0: map[int]PinMode{},
+		clock1: map[int]PinMode{},
+		clock2: map[int]PinMode{},
+		//https://www.scribd.com/doc/127599939/BCM2835-Audio-clocks#scribd
+		clockRegisters: map[string]uint64{
+			"GP0CTL":   0x7E101070,
+			"GP0DIV":   0x7E101074,
+			"GP1CTL":   0x7E101078,
+			"GP1DIV":   0x7E10107C,
+			"GP2CTL":   0x7E101080,
+			"GP2DIV":   0x7E101084,
+			"Unknown1": 0x7e101088,
+			"Unknown2": 0x7e10108c,
+			"Unknown3": 0x7e101090,
+			"Unknown4": 0x7e101094,
+			"PCMCTL":   0x7E101098,
+			"PCMDIV":   0x7E10109C,
+			"PWMCTL":   0x7E1010A0,
+			"PWMDIV":   0x7E1010A4,
 		},
 	}
 
@@ -147,6 +169,10 @@ func (chip *Chip2837) getGPIORegisters() (gpioRegisters, addressType) {
 
 func (chip *Chip2837) getPWMRegisters() (pwmRegisters, addressType) {
 	return chip.pwmRegisters, addrBus
+}
+
+func (chip *Chip2837) getClockRegisters() (clockRegisters, addressType) {
+	return chip.clockRegisters, addrBus
 }
 
 func (chip *Chip2837) getPinBCM(pinNumBoard int) int {
@@ -228,6 +254,37 @@ func (chip *Chip2837) pwmDat(bcm int, val int) (registerAddress uint64, addressT
 	return 0, addrBus, val
 }
 
+//
+func (chip *Chip2837) clckCtl(bcm int, enable bool) (registerAddress uint64, addressType addressType, operation int) {
+
+	password := 0x5A000000
+	operation = password
+
+	if enable {
+
+	}
+	//if divi < 2 || divf == 0 {
+	//	mash = 0
+	//}
+
+	return chip.clockRegisters["PWMCTL"], addrBus, operation
+}
+
+//
+func (chip *Chip2837) clckDiv(bcm int, freq int) (registerAddress uint64, addressType addressType, operation int) {
+	const sourceFreq = 19200000 // oscilator frequency
+	const divMask = 4095        // divi and divf have 12 bits each
+
+	divi := uint32(sourceFreq / freq)
+	divf := uint32(((sourceFreq % freq) << 12) / freq)
+
+	divi &= divMask
+	divf &= divMask
+
+	return chip.clockRegisters["PWMDIV"], addrBus, operation
+}
+
+//
 func (chip *Chip2837) twoBankCommand(bcm int, commandName string, addrType addressType) (registerAddress uint64, addressType addressType, operation int) {
 	addressOffset := bcm / 32 //1 register for 32 pins
 	shift := (uint8(bcm) % 32)
