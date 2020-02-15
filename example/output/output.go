@@ -15,7 +15,7 @@ func main() {
 		fmt.Println("[ERROR] can't init pi", err)
 	}
 
-	p17, _ := r.GetPin(11)
+	p17, _ := r.GetPin(12)
 	err = p17.ModeOutput()
 	if err != nil {
 		fmt.Println("[ERROR] cant set mode to pin 17(11)", err)

@@ -161,7 +161,13 @@ func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
 		address = r.chip.addrBus2Phys(address)
 	}
 
-	return r.mmapPWM.run(address, operation)
+	err := r.mmapPWM.run(address, operation)
+	
+	if err == nil {
+		r.pwmRunning = true
+	}
+	
+	return err
 }
 
 //StopPWM func disables PWM
