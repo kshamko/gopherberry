@@ -255,13 +255,21 @@ func (chip *Chip2837) pwmDat(bcm int, val int) (registerAddress uint64, addressT
 }
 
 //
-func (chip *Chip2837) clckCtl(bcm int, enable bool) (registerAddress uint64, addressType addressType, operation int) {
+func (chip *Chip2837) clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int) {
 
 	password := 0x5A000000
-	operation = password
+	mash := 0
+	//const PASSWORD = 0x5A000000
+	//const busy = 1 << 7
+	const enab = 1 << 4
+	const disab = 0 << 4
+	const src = 1 << 0 // oscilator
+	operation = password | mash | src
 
-	if enable {
-
+	if cfg.Enab {
+		operation = operation | enab
+	} else {
+		operation = operation | disab
 	}
 	//if divi < 2 || divf == 0 {
 	//	mash = 0

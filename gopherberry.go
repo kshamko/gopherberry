@@ -61,6 +61,21 @@ type PWMChannelConfig struct {
 	ChanEnabled int
 }
 
+type ClockConfig struct {
+	Mash int  //0,1,2,3
+	Busy bool // read-only
+	Enab bool //
+	//0 = GND
+	//1 = oscillator
+	//2 = testdebug0/
+	//3 = testdebug1
+	//4 = PLLA per
+	//5 = PLLC per
+	//6 = PLLD per
+	//7 = HDMI auxiliary
+	Src int //
+}
+
 //Raspberry struct
 type Raspberry struct {
 	chip      chip
@@ -97,8 +112,9 @@ type chip interface {
 	pwmRng(bcm int, val int) (registerAddress uint64, addressType addressType, operation int)
 	pwmDat(bcm int, val int) (registerAddress uint64, addressType addressType, operation int)
 
-	clckCtl(bcm int, enable bool) (registerAddress uint64, addressType addressType, operation int)
+	clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int)
 	clckDiv(bcm int, freq int) (registerAddress uint64, addressType addressType, operation int)
+	//clckCfg(data int) ClockConfig
 }
 
 //New func
@@ -162,11 +178,11 @@ func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
 	}
 
 	err := r.mmapPWM.run(address, operation)
-	
+
 	if err == nil {
 		r.pwmRunning = true
 	}
-	
+
 	return err
 }
 

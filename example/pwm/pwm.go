@@ -15,6 +15,14 @@ func main() {
 		fmt.Println("[ERROR] can't init pi", err)
 	}
 
+	p18, _ := r.GetPin(12)
+	err = p18.ModePWM()
+	if err != nil {
+		fmt.Println("[ERROR] cant set mode to pin 18(12)", err)
+	}
+
+	p18.SetFrequency(gopherberry.ClockConfig{Enab: true}, 64000)
+
 	c := gopherberry.PWMChannelConfig{
 		MSEnable:    1,
 		ChanEnabled: 1,
@@ -24,13 +32,6 @@ func main() {
 		fmt.Println("[ERROR] can't init pwm", err)
 	}
 
-	p18, _ := r.GetPin(12)
-	err = p18.ModePWM()
-	if err != nil {
-		fmt.Println("[ERROR] cant set mode to pin 18(12)", err)
-	}
-
-	//pin.Freq(64000)
 	p18.DutyCycle(0, 32)
 	// the LED will be blinking at 2000Hz
 	// (source frequency divided by cycle length => 64000/32 = 2000)
