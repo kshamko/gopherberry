@@ -36,7 +36,7 @@ var (
 //
 type gpioRegisters map[string][]uint64
 type pwmRegisters map[string]uint64
-type clockRegisters map[string]uint64
+type clockRegisters map[string][]uint64
 
 //PWMChannelConfig struct represents configuration of a PWM channel
 //Pi has 2 PWM channels
@@ -143,6 +143,7 @@ func New(chipVersion chipVersion) (*Raspberry, error) {
 
 	clockMmap, err := raspberry.initMmapClock(c.getClockRegisters())
 	if err != nil {
+		panic(err)
 		return nil, errors.Wrap(err, "can't init clock mmap")
 	}
 	raspberry.mmapClock = clockMmap
@@ -228,11 +229,13 @@ func (r *Raspberry) initMmapPWM(pwmRegisters pwmRegisters, addressType addressTy
 func (r *Raspberry) initMmapClock(clockRegisters clockRegisters, addressType addressType) (*mmap, error) {
 
 	physicalAddresses := []uint64{}
-	for _, register := range clockRegisters {
+	for _, registers := range clockRegisters {
+		for _, register := range registers {
 		if addressType == addrBus {
 			register = r.chip.addrBus2Phys(register)
 		}
 		physicalAddresses = append(physicalAddresses, register)
+	}
 	}
 	return newMmap(physicalAddresses)
 }

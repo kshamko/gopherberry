@@ -2,9 +2,9 @@ package gopherberry
 
 //ModePWM set pin to PWM mode
 func (p *Pin) ModePWM() error {
-	if !p.pi.pwmRunning {
-		return ErrPWMStart
-	}
+	//if !p.pi.pwmRunning {
+//		return ErrPWMStart
+	//}
 
 	mode, err := p.pi.chip.getPinModePWM(p.bcmNum)
 	if err != nil {
