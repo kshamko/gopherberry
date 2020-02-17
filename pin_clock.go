@@ -2,8 +2,6 @@ package gopherberry
 
 import (
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 //@Todo:
@@ -21,6 +19,9 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 	//@todo check busy flag
 	time.Sleep(time.Microsecond * 10)
 
+	cfg.Enab = false
+	p.StartClock()
+
 	addr1, addrType1, operation1 := p.pi.chip.clckDiv(p.bcmNum, freq)
 	if addrType1 == addrBus {
 		addr1 = p.pi.chip.addrBus2Phys(addr1)
@@ -30,6 +31,7 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 	p.pi.mmapClock.run(addr1, operation1)
 	time.Sleep(time.Microsecond * 10) // ... so wait for them to take effect
 
+	cfg.Enab = true
 	err = p.StartClock(cfg)
 	time.Sleep(time.Microsecond * 10)
 	/*
@@ -42,7 +44,7 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 //
 func (p *Pin) StartClock(cfg ClockConfig) error {
 	if !cfg.Enab {
-		return errors.New("wrong config with Enab=false")
+		//return errors.New("wrong config with Enab=false")
 	}
 	address, addressType, operation := p.pi.chip.clckCtl(p.bcmNum, cfg)
 	return p.pi.runMmapClockCommand(address, addressType, operation)
