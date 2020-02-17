@@ -127,21 +127,19 @@ func newChip2837() chip {
 		clock1: map[int]PinMode{},
 		clock2: map[int]PinMode{},
 		//https://www.scribd.com/doc/127599939/BCM2835-Audio-clocks#scribd
-		clockRegisters: map[string]uint64{
-			"GP0CTL":   0x7E101070,
-			"GP0DIV":   0x7E101074,
-			"GP1CTL":   0x7E101078,
-			"GP1DIV":   0x7E10107C,
-			"GP2CTL":   0x7E101080,
-			"GP2DIV":   0x7E101084,
-			"Unknown1": 0x7e101088,
-			"Unknown2": 0x7e10108c,
-			"Unknown3": 0x7e101090,
-			"Unknown4": 0x7e101094,
-			"PCMCTL":   0x7E101098,
-			"PCMDIV":   0x7E10109C,
-			"PWMCTL":   0x7E1010A0,
-			"PWMDIV":   0x7E1010A4,
+		clockRegisters: map[string][]uint64{
+			"Unknown": {0x7e101000, 0x7e101004, 0x7e101008, 0x7e10100c, 0x7e101010, 0x7e101014, 0x7e101018, 0x7e10101c, 0x7e101020, 0x7e101024, 0x7e101028, 0x7e10102c, 0x7e101030, 0x7e101034, 0x7e101038, 0x7e10103c, 0x7e101040, 0x7e101044, 0x7e101048, 0x7e10104c, 0x7e101050, 0x7e101054, 0x7e101058, 0x7e10105c, 0x7e101060, 0x7e101064, 0x7e101068, 0x7e10106c},
+			"GP0CTL":   {0x7E101070},
+			"GP0DIV":   {0x7E101074},
+			"GP1CTL":   {0x7E101078},
+			"GP1DIV":   {0x7E10107C},
+			"GP2CTL":   {0x7E101080},
+			"GP2DIV":   {0x7E101084},
+			"Unknown1": {0x7e101088, 0x7e10108c, 0x7e101090, 0x7e101094},
+			"PCMCTL":   {0x7E101098},
+			"PCMDIV":   {0x7E10109C},
+			"PWMCTL":   {0x7E1010A0},
+			"PWMDIV":   {0x7E1010A4},
 		},
 	}
 
@@ -275,7 +273,7 @@ func (chip *Chip2837) clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64,
 	//	mash = 0
 	//}
 
-	return chip.clockRegisters["PWMCTL"], addrBus, operation
+	return chip.clockRegisters["PWMCTL"][0], addrBus, operation
 }
 
 //
@@ -289,7 +287,7 @@ func (chip *Chip2837) clckDiv(bcm int, freq int) (registerAddress uint64, addres
 	divi &= divMask
 	divf &= divMask
 
-	return chip.clockRegisters["PWMDIV"], addrBus, operation
+	return chip.clockRegisters["PWMDIV"][0], addrBus, operation
 }
 
 //

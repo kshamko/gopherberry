@@ -1,43 +1,58 @@
 package gopherberry
 
-import "time"
+import (
+	"time"
 
+	"github.com/pkg/errors"
+)
+
+//@Todo:
+//- verify busu flag for clock
+//- check if pin in clock/pwm mode to make clock operations
+
+//
 func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 
-	cfgToStop := cfg
-	cfgToStop.Enab = false
-
-	//stop clock
-	addr, addrType, operation := p.pi.chip.clckCtl(p.bcmNum, cfgToStop)
-	if addrType == addrBus {
-		addr = p.pi.chip.addrBus2Phys(addr)
+	err := p.StopClock()
+	if err != nil {
+		return nil
 	}
-	p.pi.mmapClock.run(addr, operation)
-	//curCfg := p.pi.chip.clckCfg(p.pi.mmapClock.get(addr))
 
-	//if curCfg.Busy { //wait until not busy
+	//@todo check busy flag
 	time.Sleep(time.Microsecond * 10)
-
-	//}
-	//curClockCfg := p.pi.chip.clckCfg()
 
 	addr1, addrType1, operation1 := p.pi.chip.clckDiv(p.bcmNum, freq)
 	if addrType1 == addrBus {
 		addr1 = p.pi.chip.addrBus2Phys(addr1)
 	}
-
+	//
+	//divi = 300, divf = 0 freq=64000
 	p.pi.mmapClock.run(addr1, operation1)
 	time.Sleep(time.Microsecond * 10) // ... so wait for them to take effect
 
-	_, _, operation = p.pi.chip.clckCtl(p.bcmNum, cfg)
-	return p.pi.mmapClock.run(addr, operation)
+	err = p.StartClock(cfg)
+	time.Sleep(time.Microsecond * 10)
+	/*
+		_, _, operation = p.pi.chip.clckCtl(p.bcmNum, cfg)
+		return p.pi.mmapClock.run(addr, operation)*/
+
+	return err
 }
 
 //
-func (p *Pin) StopClock(cfg ClockConfig) error {
+func (p *Pin) StartClock(cfg ClockConfig) error {
+	if !cfg.Enab {
+		return errors.New("wrong config with Enab=false")
+	}
+	address, addressType, operation := p.pi.chip.clckCtl(p.bcmNum, cfg)
+	return p.pi.runMmapClockCommand(address, addressType, operation)
+}
+
+//
+func (p *Pin) StopClock() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	cfg.Enab = false
+	cfg := ClockConfig{Enab: false}
 	address, addressType, operation := p.pi.chip.clckCtl(p.bcmNum, cfg)
 	return p.pi.runMmapClockCommand(address, addressType, operation)
 }
