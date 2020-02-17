@@ -36,6 +36,7 @@ func main() {
 	p18.SetFrequency(gopherberry.ClockConfig{Enab: true, Mash: 1}, 64000)
 
 	c := gopherberry.PWMChannelConfig{
+		MSEnable:    1,
 		ChanEnabled: 1,
 	}
 	err = r.StartPWM(c, gopherberry.PWMChannelConfig{})
