@@ -128,7 +128,7 @@ func newChip2837() chip {
 		clock2: map[int]PinMode{},
 		//https://www.scribd.com/doc/127599939/BCM2835-Audio-clocks#scribd
 		clockRegisters: map[string][]uint64{
-			"Unknown": {0x7e101000, 0x7e101004, 0x7e101008, 0x7e10100c, 0x7e101010, 0x7e101014, 0x7e101018, 0x7e10101c, 0x7e101020, 0x7e101024, 0x7e101028, 0x7e10102c, 0x7e101030, 0x7e101034, 0x7e101038, 0x7e10103c, 0x7e101040, 0x7e101044, 0x7e101048, 0x7e10104c, 0x7e101050, 0x7e101054, 0x7e101058, 0x7e10105c, 0x7e101060, 0x7e101064, 0x7e101068, 0x7e10106c},
+			"Unknown":  {0x7e101000, 0x7e101004, 0x7e101008, 0x7e10100c, 0x7e101010, 0x7e101014, 0x7e101018, 0x7e10101c, 0x7e101020, 0x7e101024, 0x7e101028, 0x7e10102c, 0x7e101030, 0x7e101034, 0x7e101038, 0x7e10103c, 0x7e101040, 0x7e101044, 0x7e101048, 0x7e10104c, 0x7e101050, 0x7e101054, 0x7e101058, 0x7e10105c, 0x7e101060, 0x7e101064, 0x7e101068, 0x7e10106c},
 			"GP0CTL":   {0x7E101070},
 			"GP0DIV":   {0x7E101074},
 			"GP1CTL":   {0x7E101078},
@@ -256,7 +256,7 @@ func (chip *Chip2837) pwmDat(bcm int, val int) (registerAddress uint64, addressT
 func (chip *Chip2837) clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int) {
 
 	password := 0x5A000000
-	mash := 0
+	mash := 1
 	//const PASSWORD = 0x5A000000
 	//const busy = 1 << 7
 	const enab = 1 << 4
@@ -281,13 +281,13 @@ func (chip *Chip2837) clckDiv(bcm int, freq int) (registerAddress uint64, addres
 	const sourceFreq = 19200000 // oscilator frequency
 	const divMask = 4095        // divi and divf have 12 bits each
 
-	divi := uint32(sourceFreq / freq)
-	divf := uint32(((sourceFreq % freq) << 12) / freq)
+	divi := int(sourceFreq / freq)
+	divf := int(((sourceFreq % freq) << 12) / freq)
 
 	divi &= divMask
 	divf &= divMask
 
-	return chip.clockRegisters["PWMDIV"][0], addrBus, operation
+	return chip.clockRegisters["PWMDIV"][0], addrBus, (0x5A000000 | (divi << 12) | divf)
 }
 
 //
