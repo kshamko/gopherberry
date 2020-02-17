@@ -39,7 +39,7 @@ func main() {
 		MSEnable:    1,
 		ChanEnabled: 1,
 	}
-	err = r.StartPWM(c, gopherberry.PWMChannelConfig{})
+	err = r.StartPWM(c, c)
 	if err != nil {
 		fmt.Println("[ERROR] can't init pwm", err)
 	}
@@ -52,10 +52,12 @@ func main() {
 	// five times smoothly fade in and out
 	for i := 0; i < 5; i++ {
 		for i := int(0); i < 32; i++ { // increasing brightness
+			r.StartPWM(c, c)
 			p18.DutyCycle(i, 32)
 			time.Sleep(time.Second / 32)
 		}
 		for i := int(32); i > 0; i-- { // decreasing brightness
+			r.StartPWM(c, c)
 			p18.DutyCycle(i, 32)
 			time.Sleep(time.Second / 32)
 		}
