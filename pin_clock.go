@@ -20,7 +20,7 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 	time.Sleep(time.Microsecond * 10)
 
 	cfg.Enab = false
-	p.StartClock()
+	p.StartClock(cfg)
 
 	addr1, addrType1, operation1 := p.pi.chip.clckDiv(p.bcmNum, freq)
 	if addrType1 == addrBus {
