@@ -11,13 +11,13 @@ import (
 //
 func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 
-	err := p.StopClock()
+	/*err := p.StopClock()
 	if err != nil {
 		return nil
 	}
 
 	//@todo check busy flag
-	time.Sleep(time.Microsecond * 10)
+	time.Sleep(time.Microsecond * 10)*/
 
 	cfg.Enab = false
 	p.StartClock(cfg)
@@ -32,7 +32,7 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 	time.Sleep(time.Microsecond * 10) // ... so wait for them to take effect
 
 	cfg.Enab = true
-	err = p.StartClock(cfg)
+	err := p.StartClock(cfg)
 	time.Sleep(time.Microsecond * 10)
 	/*
 		_, _, operation = p.pi.chip.clckCtl(p.bcmNum, cfg)
