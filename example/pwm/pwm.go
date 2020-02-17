@@ -48,16 +48,14 @@ func main() {
 	// the LED will be blinking at 2000Hz
 	// (source frequency divided by cycle length => 64000/32 = 2000)
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Second)
 	// five times smoothly fade in and out
 	for i := 0; i < 5; i++ {
 		for i := int(0); i < 32; i++ { // increasing brightness
-			//r.StartPWM(c, c)
 			p18.DutyCycle(i, 32)
 			time.Sleep(time.Second / 32)
 		}
 		for i := int(32); i > 0; i-- { // decreasing brightness
-			//r.StartPWM(c, c)
 			p18.DutyCycle(i, 32)
 			time.Sleep(time.Second / 32)
 		}
