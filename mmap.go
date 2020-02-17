@@ -63,7 +63,7 @@ func (mmap *mmap) run(address uint64, command int) error {
 	defer mmap.mu.Unlock()
 
 	if offset, ok := mmap.offsets[address]; ok {
-		fmt.Println(offset)
+		fmt.Printf("Offset: %d, command: %b\n", offset, command)
 		mmap.datap[offset] = command
 		return nil
 	}
