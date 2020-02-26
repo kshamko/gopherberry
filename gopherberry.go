@@ -1,6 +1,7 @@
 package gopherberry
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -131,20 +132,19 @@ func New(chipVersion chipVersion) (*Raspberry, error) {
 
 	gpioMmap, err := raspberry.initMmapGPIO(c.getGPIORegisters())
 	if err != nil {
-		return nil, errors.Wrap(err, "can't init gpio mmap")
+		//return nil, errors.Wrap(err, "can't init gpio mmap")
 	}
 	raspberry.mmapGPIO = gpioMmap
 
 	pwmMmap, err := raspberry.initMmapPWM(c.getPWMRegisters())
 	if err != nil {
-		return nil, errors.Wrap(err, "can't init pwm mmap")
+		//return nil, errors.Wrap(err, "can't init pwm mmap")
 	}
 	raspberry.mmapPWM = pwmMmap
 
 	clockMmap, err := raspberry.initMmapClock(c.getClockRegisters())
 	if err != nil {
-		panic(err)
-		return nil, errors.Wrap(err, "can't init clock mmap")
+		//return nil, errors.Wrap(err, "can't init clock mmap")
 	}
 	raspberry.mmapClock = clockMmap
 
@@ -192,7 +192,10 @@ func (r *Raspberry) StopPWM() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.pwmRunning = false
+	//r.pwmRunning = false
+	addr, addrType, operation := r.chip.pwmCtl(PWMChannelConfig{}, PWMChannelConfig{})
+
+	fmt.Println(addr, addrType, operation)
 
 	return nil
 }
@@ -231,11 +234,11 @@ func (r *Raspberry) initMmapClock(clockRegisters clockRegisters, addressType add
 	physicalAddresses := []uint64{}
 	for _, registers := range clockRegisters {
 		for _, register := range registers {
-		if addressType == addrBus {
-			register = r.chip.addrBus2Phys(register)
+			if addressType == addrBus {
+				register = r.chip.addrBus2Phys(register)
+			}
+			physicalAddresses = append(physicalAddresses, register)
 		}
-		physicalAddresses = append(physicalAddresses, register)
-	}
 	}
 	return newMmap(physicalAddresses)
 }
@@ -258,6 +261,10 @@ func (r *Raspberry) runMmapPWMCommand(address uint64, addressType addressType, o
 
 //
 func (r *Raspberry) runMmapClockCommand(address uint64, addressType addressType, operation int) error {
+	if r.mmapClock == nil {
+		return nil
+	}
+
 	if addressType == addrBus {
 		address = r.chip.addrBus2Phys(address)
 	}
