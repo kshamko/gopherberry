@@ -27,6 +27,7 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 	}
 	//
 	//divi = 300, divf = 0 freq=64000
+
 	p.pi.mmapClock.run(addr1, operation1)
 	time.Sleep(time.Microsecond * 10) // ... so wait for them to take effect
 
@@ -43,6 +44,7 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 func (p *Pin) StartClock(cfg ClockConfig) error {
 	if !cfg.Enab {
 		return errors.New("wrong config with Enab=false")
+		//return errors.New("wrong config with Enab=false")
 	}
 	address, addressType, operation := p.pi.chip.clckCtl(p.bcmNum, cfg)
 	return p.pi.runMmapClockCommand(address, addressType, operation)
