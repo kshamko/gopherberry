@@ -27,16 +27,11 @@ func (p *Pin) SetFrequency(cfg ClockConfig, freq int) error {
 	}
 	//
 	//divi = 300, divf = 0 freq=64000
-
 	p.pi.mmapClock.run(addr1, operation1)
 	time.Sleep(time.Microsecond * 10) // ... so wait for them to take effect
 
 	err = p.StartClock(cfg)
 	time.Sleep(time.Microsecond * 10)
-	/*
-		_, _, operation = p.pi.chip.clckCtl(p.bcmNum, cfg)
-		return p.pi.mmapClock.run(addr, operation)*/
-
 	return err
 }
 
