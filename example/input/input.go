@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("[ERROR] can't init pi", err)
 	}
 
-	p17, _ := r.GetPin(11)
+	p17, _ := r.GetPin(12)
 	_ = p17.ModeOutput()
 
 	p40, _ := r.GetPin(40)
