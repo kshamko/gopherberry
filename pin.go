@@ -11,7 +11,9 @@ type Pin struct {
 	pi     *Raspberry
 	mu     sync.Mutex
 
-	curMode      PinMode
+	curMode     PinMode
+	isClockMode bool
+
 	edgeChan     chan EdgeType
 	edgeToDetect EdgeType
 	epoll        *Epoll
@@ -39,35 +41,18 @@ var (
 )
 
 //GetMode func
-//@todo implement
 func (p *Pin) GetMode() PinMode {
 	return p.curMode
 }
 
 //
-func (p *Pin) mode(mode PinMode) error {
+func (p *Pin) mode(mode PinMode, isClockMode bool) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	p.curMode = mode
+	p.isClockMode = isClockMode
+
 	address, addressType, operation := p.pi.chip.gpgsel(p.bcmNum, mode)
-	return p.pi.runMmapGPIOCommand(address, addressType, operation)
+	return p.pi.memWriteGPIO(address, addressType, operation)
 }
-
-//
-/*func (p *Pin) runCommand(address uint64, operation int) error {
-	offset, ok := p.pi.memOffsets[address]
-	if !ok {
-		return ErrNoOffset
-	}
-	return p.pi.mmap.run(offset, operation)
-}*/
-
-//
-/*func (p *Pin) memState(address uint64) (int, error) {
-	offset, ok := p.pi.memOffsets[address]
-	if !ok {
-		return 0, ErrNoOffset
-	}
-	return p.pi.mmapGPIO.get(offset)
-}*/

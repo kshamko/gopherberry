@@ -1,7 +1,6 @@
 package gopherberry
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -35,9 +34,7 @@ var (
 )
 
 //
-type gpioRegisters map[string][]uint64
-type pwmRegisters map[string]uint64
-type clockRegisters map[string][]uint64
+type registers map[string][]uint64
 
 //PWMChannelConfig struct represents configuration of a PWM channel
 //Pi has 2 PWM channels
@@ -62,21 +59,6 @@ type PWMChannelConfig struct {
 	ChanEnabled int
 }
 
-type ClockConfig struct {
-	Mash int  //0,1,2,3
-	Busy bool // read-only
-	Enab bool //
-	//0 = GND
-	//1 = oscillator
-	//2 = testdebug0/
-	//3 = testdebug1
-	//4 = PLLA per
-	//5 = PLLC per
-	//6 = PLLD per
-	//7 = HDMI auxiliary
-	Src int //
-}
-
 //Raspberry struct
 type Raspberry struct {
 	chip      chip
@@ -90,17 +72,11 @@ type Raspberry struct {
 }
 
 type chip interface {
-	/*
-		getBasePeriphialsAddressPhys() uint64
-		//getBasePeriphialsAddressBus() uint64
-		getGPIORegisters() gpioRegisters
-		getPWMRegisters() pwmRegisters
-		getPinModePWM(pinNumBCM int) (error, PinMode)*/
-
 	getPinBCM(pinNumBoard int) int
-	getGPIORegisters() (gpioRegisters, addressType)
-	getPWMRegisters() (pwmRegisters, addressType)
-	getClockRegisters() (clockRegisters, addressType)
+	getGPIORegisters() (registers, addressType)
+	getPWMRegisters() (registers, addressType)
+	getClockRegisters() (registers, addressType)
+
 	addrBus2Phys(uint64) uint64
 	getPinModePWM(pinNumBCM int) (PinMode, error)
 
@@ -112,39 +88,41 @@ type chip interface {
 	pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint64, addressType addressType, operation int)
 	pwmRng(bcm int, val int) (registerAddress uint64, addressType addressType, operation int)
 	pwmDat(bcm int, val int) (registerAddress uint64, addressType addressType, operation int)
+	pwmClockCtl(cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int)
+	pwmClockDiv(sourceFreq, freq int) (registerAddress uint64, addressType addressType, operation int)
 
-	clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int)
-	clckDiv(bcm int, freq int) (registerAddress uint64, addressType addressType, operation int)
+	//clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int)
+	//clckDiv(bcm int, freq int) (registerAddress uint64, addressType addressType, operation int)
 	//clckCfg(data int) ClockConfig
 }
 
 //New func
 func New(chipVersion chipVersion) (*Raspberry, error) {
 
-	c := newChip2837() //default
+	c := new2837() //default
 	if chipVersion == ARM2837 {
-		c = newChip2837()
+		c = new2837()
 	}
 
 	raspberry := &Raspberry{
 		chip: c,
 	}
 
-	gpioMmap, err := raspberry.initMmapGPIO(c.getGPIORegisters())
+	gpioMmap, err := raspberry.initMmap(c.getGPIORegisters())
 	if err != nil {
-		//return nil, errors.Wrap(err, "can't init gpio mmap")
+		return nil, errors.Wrap(err, "can't init gpio mmap")
 	}
 	raspberry.mmapGPIO = gpioMmap
 
-	pwmMmap, err := raspberry.initMmapPWM(c.getPWMRegisters())
+	pwmMmap, err := raspberry.initMmap(c.getPWMRegisters())
 	if err != nil {
-		//return nil, errors.Wrap(err, "can't init pwm mmap")
+		return nil, errors.Wrap(err, "can't init pwm mmap")
 	}
 	raspberry.mmapPWM = pwmMmap
 
-	clockMmap, err := raspberry.initMmapClock(c.getClockRegisters())
+	clockMmap, err := raspberry.initMmap(c.getClockRegisters())
 	if err != nil {
-		//return nil, errors.Wrap(err, "can't init clock mmap")
+		return nil, errors.Wrap(err, "can't init clock mmap")
 	}
 	raspberry.mmapClock = clockMmap
 
@@ -170,119 +148,77 @@ func (r *Raspberry) GetPin(pinNumBoard int) (*Pin, error) {
 //
 //
 func (r *Raspberry) StartPWM(cfg1, cfg2 PWMChannelConfig) error {
-	r.mu.Lock()
+	/*r.mu.Lock()
 	defer r.mu.Unlock()
-
 	address, addressType, operation := r.chip.pwmCtl(cfg1, cfg2)
-	if addressType == addrBus {
-		address = r.chip.addrBus2Phys(address)
-	}
-
-	err := r.mmapPWM.run(address, operation)
-
+	err := r.mmapPWM.run(r.physAddress(address, addressType), operation)
 	if err == nil {
 		r.pwmRunning = true
 	}
-
-	return err
+	return err*/
+	return nil
 }
 
 //StopPWM func disables PWM
 func (r *Raspberry) StopPWM() error {
-	r.mu.Lock()
+	/*r.mu.Lock()
 	defer r.mu.Unlock()
 
-	//r.pwmRunning = false
 	addr, addrType, operation := r.chip.pwmCtl(PWMChannelConfig{}, PWMChannelConfig{})
-
-	fmt.Println(addr, addrType, operation)
-
+	return nil*/
 	return nil
+
 }
 
-func (r *Raspberry) initMmapGPIO(gpioRegisters gpioRegisters, addressType addressType) (*mmap, error) {
+/**
+* Memory mapped related functions
+**/
+
+func (r *Raspberry) initMmap(registers registers, addressType addressType) (*mmap, error) {
 
 	physicalAddresses := []uint64{}
-	for _, registers := range gpioRegisters {
-		for _, register := range registers {
-
-			if addressType == addrBus {
-				register = r.chip.addrBus2Phys(register)
-			}
-			physicalAddresses = append(physicalAddresses, register)
+	for _, regs := range registers {
+		for _, register := range regs {
+			physicalAddresses = append(physicalAddresses, r.physAddress(register, addressType))
 		}
 	}
 	return newMmap(physicalAddresses)
 }
 
 //
-func (r *Raspberry) initMmapPWM(pwmRegisters pwmRegisters, addressType addressType) (*mmap, error) {
-
-	physicalAddresses := []uint64{}
-	for _, register := range pwmRegisters {
-		if addressType == addrBus {
-			register = r.chip.addrBus2Phys(register)
-		}
-		physicalAddresses = append(physicalAddresses, register)
-	}
-	return newMmap(physicalAddresses)
+func (r *Raspberry) memWriteGPIO(address uint64, addressType addressType, operation int) error {
+	return r.mmapGPIO.set(r.physAddress(address, addressType), operation)
 }
 
 //
-func (r *Raspberry) initMmapClock(clockRegisters clockRegisters, addressType addressType) (*mmap, error) {
-
-	physicalAddresses := []uint64{}
-	for _, registers := range clockRegisters {
-		for _, register := range registers {
-			if addressType == addrBus {
-				register = r.chip.addrBus2Phys(register)
-			}
-			physicalAddresses = append(physicalAddresses, register)
-		}
-	}
-	return newMmap(physicalAddresses)
+func (r *Raspberry) memWritePWM(address uint64, addressType addressType, operation int) error {
+	return r.mmapPWM.set(r.physAddress(address, addressType), operation)
 }
 
 //
-func (r *Raspberry) runMmapGPIOCommand(address uint64, addressType addressType, operation int) error {
+func (r *Raspberry) memWriteClock(address uint64, addressType addressType, operation int) error {
+	return r.mmapClock.set(r.physAddress(address, addressType), operation)
+}
+
+//
+func (r *Raspberry) memReadGPIO(address uint64, addressType addressType) (int, error) {
+	return r.mmapGPIO.get(r.physAddress(address, addressType))
+}
+
+//
+func (r *Raspberry) memReadPWM(address uint64, addressType addressType) (int, error) {
+	return r.mmapPWM.get(r.physAddress(address, addressType))
+}
+
+//
+func (r *Raspberry) memReadClock(address uint64, addressType addressType) (int, error) {
+	return r.mmapClock.get(r.physAddress(address, addressType))
+}
+
+func (r *Raspberry) physAddress(address uint64, addressType addressType) uint64 {
 	if addressType == addrBus {
-		address = r.chip.addrBus2Phys(address)
-	}
-	return r.mmapGPIO.run(address, operation)
-}
-
-//
-func (r *Raspberry) runMmapPWMCommand(address uint64, addressType addressType, operation int) error {
-	if addressType == addrBus {
-		address = r.chip.addrBus2Phys(address)
-	}
-	return r.mmapPWM.run(address, operation)
-}
-
-//
-func (r *Raspberry) runMmapClockCommand(address uint64, addressType addressType, operation int) error {
-	if r.mmapClock == nil {
-		return nil
+		return r.chip.addrBus2Phys(address)
 	}
 
-	if addressType == addrBus {
-		address = r.chip.addrBus2Phys(address)
-	}
-	return r.mmapClock.run(address, operation)
-}
-
-//
-func (r *Raspberry) memStateGPIO(address uint64, addressType addressType) (int, error) {
-	if addressType == addrBus {
-		address = r.chip.addrBus2Phys(address)
-	}
-	return r.mmapGPIO.get(address)
-}
-
-//
-func (r *Raspberry) memStateClock(address uint64, addressType addressType) (int, error) {
-	if addressType == addrBus {
-		address = r.chip.addrBus2Phys(address)
-	}
-	return r.mmapClock.get(address)
+	return address
 }

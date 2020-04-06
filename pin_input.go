@@ -17,7 +17,7 @@ const (
 
 //ModeInput sets pin to input mode
 func (p *Pin) ModeInput() error {
-	return p.mode(PinModeInput)
+	return p.mode(PinModeInput, false)
 }
 
 //DetectEdge func

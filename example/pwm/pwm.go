@@ -26,14 +26,15 @@ func main() {
 	}
 
 	//stop pwm
-	r.StopPWM()
+	//r.StopPWM()
 
 	//set frequency
 	//set divi/divf
 	//start pwm
 	//set duty cycle
 
-	p18.SetFrequency(gopherberry.ClockConfig{Enab: true, Mash: 1}, 64000)
+	//If you want the cleanest clock source which is the XTAL (19.2MHz) crystal, then Clock source code = 0001b (oscilator)
+	//p18.SetFrequency(gopherberry.ClockConfig{Enab: true, Mash: 1}, 19200000, 64000)
 
 	c := gopherberry.PWMChannelConfig{
 		ChanEnabled: 1,

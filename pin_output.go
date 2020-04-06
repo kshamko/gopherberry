@@ -2,7 +2,7 @@ package gopherberry
 
 //ModeOutput sets pin to output mode
 func (p *Pin) ModeOutput() error {
-	return p.mode(PinModeOutput)
+	return p.mode(PinModeOutput, false)
 }
 
 //SetHigh sets an output to 1
@@ -14,7 +14,7 @@ func (p *Pin) SetHigh() error {
 	defer p.mu.Unlock()
 
 	address, addressType, operation := p.pi.chip.gpset(p.bcmNum)
-	return p.pi.runMmapGPIOCommand(address, addressType, operation)
+	return p.pi.memWriteGPIO(address, addressType, operation)
 }
 
 //SetLow sets an output to 0
@@ -26,7 +26,7 @@ func (p *Pin) SetLow() error {
 	defer p.mu.Unlock()
 
 	address, addressType, operation := p.pi.chip.gpclr(p.bcmNum)
-	return p.pi.runMmapGPIOCommand(address, addressType, operation)
+	return p.pi.memWriteGPIO(address, addressType, operation)
 }
 
 //Level reports pin output state
@@ -38,7 +38,7 @@ func (p *Pin) Level() (bool, error) {
 	defer p.mu.Unlock()
 
 	address, addressType, operation := p.pi.chip.gplev(p.bcmNum)
-	state, err := p.pi.memStateGPIO(address, addressType)
+	state, err := p.pi.memReadGPIO(address, addressType)
 	if err != nil {
 		return false, err
 	}

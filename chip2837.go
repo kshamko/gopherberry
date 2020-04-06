@@ -10,16 +10,18 @@ type Chip2837 struct {
 	//nolint https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering
 	board2BCM map[int]int
 	//GPIORegisters maps function to registers
-	gpioRegisters gpioRegisters
-	pwm0, pwm1    map[int]PinMode
-	pwmRegisters  pwmRegisters
+	gpioRegisters  registers
+	clockRegisters registers
+	pwmRegisters   registers
 
+	pwm0, pwm1             map[int]PinMode
 	clock0, clock1, clock2 map[int]PinMode
-	clockRegisters         clockRegisters
 }
 
-//NewChip2837 func
-func newChip2837() chip {
+const clockPassword = 0x5A000000
+
+//New() func
+func new2837() chip {
 
 	//Peripherals (at physical address 0x3F000000 on) are mapped into the kernel virtual address
 	//space starting at address 0xF2000000. Thus a peripheral advertised here at bus address
@@ -111,17 +113,17 @@ func newChip2837() chip {
 			45: PinModeALT0,
 			53: PinModeALT1,
 		},
-		pwmRegisters: map[string]uint64{
-			"CTL":   0x7E20C000,
-			"STA":   0x7E20C004,
-			"DMAC":  0x7E20C008,
-			"RSRV0": 0x7E20C00C,
-			"RNG1":  0x7E20C010,
-			"DAT1":  0x7E20C014,
-			"FIF1":  0x7E20C018,
-			"RSRV1": 0x7E20C01C,
-			"RNG2":  0x7E20C020,
-			"DAT2":  0x7E20C024,
+		pwmRegisters: map[string][]uint64{
+			"CTL":   {0x7E20C000},
+			"STA":   {0x7E20C004},
+			"DMAC":  {0x7E20C008},
+			"RSRV0": {0x7E20C00C},
+			"RNG1":  {0x7E20C010},
+			"DAT1":  {0x7E20C014},
+			"FIF1":  {0x7E20C018},
+			"RSRV1": {0x7E20C01C},
+			"RNG2":  {0x7E20C020},
+			"DAT2":  {0x7E20C024},
 		},
 		clock0: map[int]PinMode{},
 		clock1: map[int]PinMode{},
@@ -151,25 +153,15 @@ func (chip *Chip2837) addrBus2Phys(addr uint64) uint64 {
 }
 
 //
-/*func (chip *Chip2837) getBasePeriphialsAddressPhys() uint64 {
-	return chip.periphialsBaseAddrPhys
-}
-
-//
-func (chip *Chip2837) getBasePeriphialsAddressBus() uint64 {
-	return chip.periphialsBaseAddrBus
-}*/
-
-//
-func (chip *Chip2837) getGPIORegisters() (gpioRegisters, addressType) {
+func (chip *Chip2837) getGPIORegisters() (registers, addressType) {
 	return chip.gpioRegisters, addrBus
 }
 
-func (chip *Chip2837) getPWMRegisters() (pwmRegisters, addressType) {
+func (chip *Chip2837) getPWMRegisters() (registers, addressType) {
 	return chip.pwmRegisters, addrBus
 }
 
-func (chip *Chip2837) getClockRegisters() (clockRegisters, addressType) {
+func (chip *Chip2837) getClockRegisters() (registers, addressType) {
 	return chip.clockRegisters, addrBus
 }
 
@@ -187,11 +179,9 @@ func (chip *Chip2837) getPinModePWM(pinNumBCM int) (PinMode, error) {
 	if val, ok := chip.pwm0[pinNumBCM]; ok {
 		return val, nil
 	}
-
 	if val, ok := chip.pwm1[pinNumBCM]; ok {
 		return val, nil
 	}
-
 	return PinModeNA, ErrNoPWM
 }
 
@@ -225,16 +215,16 @@ func (chip *Chip2837) pwmCtl(cfg1, cfg2 PWMChannelConfig) (registerAddress uint6
 	operation += cfg2.RepeatLast<<10 + cfg2.Mode<<9 + cfg2.ChanEnabled<<8
 	operation += cfg1.MSEnable<<7 + cfg1.UseFIF0<<5 + cfg1.Polarity<<4 + cfg1.SilenceBit<<3
 	operation += cfg1.RepeatLast<<2 + cfg1.Mode<<1 + cfg1.ChanEnabled
-	return chip.pwmRegisters["CTL"], addrBus, operation
+	return chip.pwmRegisters["CTL"][0], addrBus, operation
 }
 
 func (chip *Chip2837) pwmRng(bcm int, val int) (registerAddress uint64, addressType addressType, operation int) {
 	if _, ok := chip.pwm0[bcm]; ok {
-		return chip.pwmRegisters["RNG1"], addrBus, val
+		return chip.pwmRegisters["RNG1"][0], addrBus, val
 	}
 
 	if _, ok := chip.pwm1[bcm]; ok {
-		return chip.pwmRegisters["RNG2"], addrBus, val
+		return chip.pwmRegisters["RNG2"][0], addrBus, val
 	}
 
 	return 0, addrBus, val
@@ -242,52 +232,48 @@ func (chip *Chip2837) pwmRng(bcm int, val int) (registerAddress uint64, addressT
 
 func (chip *Chip2837) pwmDat(bcm int, val int) (registerAddress uint64, addressType addressType, operation int) {
 	if _, ok := chip.pwm0[bcm]; ok {
-		return chip.pwmRegisters["DAT1"], addrBus, val
+		return chip.pwmRegisters["DAT1"][0], addrBus, val
 	}
 
 	if _, ok := chip.pwm1[bcm]; ok {
-		return chip.pwmRegisters["DAT2"], addrBus, val
+		return chip.pwmRegisters["DAT2"][0], addrBus, val
 	}
 
 	return 0, addrBus, val
 }
 
 //
-func (chip *Chip2837) clckCtl(bcm int, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int) {
-
-	password := 0x5A000000
-	mash := 1
-	//const PASSWORD = 0x5A000000
-	//const busy = 1 << 7
-	const enab = 1 << 4
-	const disab = 0 << 4
-	const src = 1 << 0 // oscilator
-	operation = password | mash | src
-
-	if cfg.Enab {
-		operation = operation | enab
-	} else {
-		operation = operation | disab
-	}
-	//if divi < 2 || divf == 0 {
-	//	mash = 0
-	//}
-
-	return chip.clockRegisters["PWMCTL"][0], addrBus, operation
+func (chip *Chip2837) pwmClockCtl(cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int) {
+	return chip.clckCtl("PWMCTL", cfg)
 }
 
 //
-func (chip *Chip2837) clckDiv(bcm int, freq int) (registerAddress uint64, addressType addressType, operation int) {
-	const sourceFreq = 19200000 // oscilator frequency
-	const divMask = 4095        // divi and divf have 12 bits each
+func (chip *Chip2837) pwmClockDiv(sourceFreq, freq int) (registerAddress uint64, addressType addressType, operation int) {
+	return chip.clckDiv("PWMDIV", sourceFreq, freq)
+}
 
-	divi := int(sourceFreq / freq)
-	divf := int(((sourceFreq % freq) << 12) / freq)
+/*
+HELPERS
+*/
 
-	divi &= divMask
-	divf &= divMask
+//
+func (chip *Chip2837) clckCtl(registerName string, cfg ClockConfig) (registerAddress uint64, addressType addressType, operation int) {
+	enab := 1 << 4
+	disab := 0 << 4
+	operation = clockPassword | cfg.Mash<<9 | int(cfg.Src) | disab
+	if cfg.Enab {
+		operation = operation | enab
+	}
+	return chip.clockRegisters[registerName][0], addrBus, operation
+}
 
-	return chip.clockRegisters["PWMDIV"][0], addrBus, (0x5A000000 | (divi << 12) | divf)
+//If you want the cleanest clock source which is the XTAL (19.2MHz) crystal, then Clock source code = 0001b (oscilator)
+func (chip *Chip2837) clckDiv(registerName string, sourceFreq, freq int) (registerAddress uint64, addressType addressType, operation int) {
+	//freq = source / ( DIVI + DIVF / 4096 ) - from the reference doc
+	divi := sourceFreq / freq
+	divr := sourceFreq % freq
+	divf := int(float32(divr) * 4096.0 / float32(freq))
+	return chip.clockRegisters[registerName][0], addrBus, (clockPassword | (divi << 12) | divf)
 }
 
 //

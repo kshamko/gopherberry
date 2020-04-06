@@ -1,7 +1,6 @@
 package gopherberry
 
 import (
-	"fmt"
 	"os"
 	"sort"
 	"sync"
@@ -57,13 +56,12 @@ func newMmap(addressesPhysical []uint64) (*mmap, error) {
 	}, nil
 }
 
-func (mmap *mmap) run(address uint64, command int) error {
+func (mmap *mmap) set(address uint64, command int) error {
 
 	mmap.mu.Lock()
 	defer mmap.mu.Unlock()
 
 	if offset, ok := mmap.offsets[address]; ok {
-		fmt.Printf("Offset: %d, command: %b\n", offset, command)
 		mmap.datap[offset] = command
 		return nil
 	}

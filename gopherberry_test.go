@@ -2,7 +2,6 @@ package gopherberry
 
 import (
 	"testing"
-	"fmt"
 )
 
 func TestOffsets(t *testing.T) {
@@ -14,9 +13,9 @@ func TestOffsets(t *testing.T) {
 }
 
 func TestStopPWM(t *testing.T) {
+	/*
+		r, _ := New(ARM2837)
+		r.StopPWM()
 
-	r, _ := New(ARM2837)
-	r.StopPWM()
-
-	fmt.Printf("%b !!%b!!\n", (1 << 8 | 1), 0b00000000000000000000000100000001 &^ (1<<8 | 1))
+		fmt.Printf("%b !!%b!!\n", (1<<8 | 1), 0b00000000000000000000000100000001&^(1<<8|1))*/
 }
